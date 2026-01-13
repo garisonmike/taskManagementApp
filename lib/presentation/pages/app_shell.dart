@@ -183,9 +183,24 @@ class TaskListTile extends ConsumerWidget {
         ),
       ),
       subtitle: _buildSubtitle(),
-      trailing: task.isCompleted
-          ? const Icon(Icons.check_circle, color: Colors.green)
-          : null,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (task.isCompleted)
+            const Icon(Icons.check_circle, color: Colors.green)
+          else
+            IconButton(
+              icon: const Icon(Icons.check_circle_outline),
+              tooltip: 'Mark as complete',
+              onPressed: () => _showCompleteTaskDialog(context, ref),
+            ),
+          IconButton(
+            icon: const Icon(Icons.more_vert),
+            tooltip: 'More actions',
+            onPressed: () => _showTaskActionsMenu(context, ref),
+          ),
+        ],
+      ),
       onTap: () async {
         final result = await Navigator.push<TaskEntity>(
           context,
@@ -204,6 +219,272 @@ class TaskListTile extends ConsumerWidget {
         }
       },
     );
+  }
+
+  Future<void> _showCompleteTaskDialog(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final shouldAddFailure = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Complete Task'),
+        content: const Text('Did you complete this task successfully?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Failed'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Completed'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldAddFailure == null) return;
+
+    if (!context.mounted) return;
+
+    if (shouldAddFailure) {
+      // Complete successfully
+      final updated = task.copyWith(
+        isCompleted: true,
+        completionDate: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+      await ref.read(taskNotifierProvider.notifier).updateTask(updated);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Task marked as completed')),
+        );
+      }
+    } else {
+      // Failed - ask for reason
+      if (!context.mounted) return;
+      final reason = await _showFailureReasonDialog(context);
+      if (reason != null && context.mounted) {
+        final updated = task.copyWith(
+          isCompleted: true,
+          completionDate: DateTime.now(),
+          failureReason: reason.isEmpty ? 'Failed' : reason,
+          updatedAt: DateTime.now(),
+        );
+        await ref.read(taskNotifierProvider.notifier).updateTask(updated);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Task marked as failed')),
+          );
+        }
+      }
+    }
+  }
+
+  Future<String?> _showFailureReasonDialog(BuildContext context) async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Failure Reason'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: 'Enter reason (optional)',
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    return result;
+  }
+
+  void _showTaskActionsMenu(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!task.isCompleted)
+              ListTile(
+                leading: const Icon(Icons.check_circle_outline),
+                title: const Text('Mark as Complete'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _showCompleteTaskDialog(context, ref);
+                },
+              ),
+            if (!task.isCompleted && task.taskType == TaskType.deadline)
+              ListTile(
+                leading: const Icon(Icons.schedule),
+                title: const Text('Postpone'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _showPostponeDialog(context, ref);
+                },
+              ),
+            if (!task.isCompleted && task.taskType == TaskType.deadline)
+              ListTile(
+                leading: const Icon(Icons.event),
+                title: const Text('Extend Deadline'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _showExtendDeadlineDialog(context, ref);
+                },
+              ),
+            ListTile(
+              leading: const Icon(Icons.edit),
+              title: const Text('Edit'),
+              onTap: () async {
+                Navigator.of(context).pop();
+                final result = await Navigator.push<TaskEntity>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TaskInputPage(existingTask: task),
+                  ),
+                );
+                if (result != null && context.mounted) {
+                  await ref
+                      .read(taskNotifierProvider.notifier)
+                      .updateTask(result);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Task updated successfully'),
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: const Text('Delete', style: TextStyle(color: Colors.red)),
+              onTap: () async {
+                Navigator.of(context).pop();
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Delete Task'),
+                    content: const Text(
+                      'Are you sure you want to delete this task?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        child: const Text('Delete'),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirm == true && context.mounted) {
+                  await ref
+                      .read(taskNotifierProvider.notifier)
+                      .deleteTask(task.id);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Task deleted')),
+                    );
+                  }
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showPostponeDialog(BuildContext context, WidgetRef ref) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Postpone Task'),
+        content: const Text('Mark this task as postponed?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Postpone'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && context.mounted) {
+      final updated = task.copyWith(
+        isPostponed: true,
+        updatedAt: DateTime.now(),
+      );
+      await ref.read(taskNotifierProvider.notifier).updateTask(updated);
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Task postponed')));
+      }
+    }
+  }
+
+  Future<void> _showExtendDeadlineDialog(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    if (task.deadline == null) return;
+
+    final newDate = await showDatePicker(
+      context: context,
+      initialDate: task.deadline!.add(const Duration(days: 1)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+    );
+
+    if (newDate != null && context.mounted) {
+      final newTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(task.deadline!),
+      );
+
+      if (newTime != null && context.mounted) {
+        final newDeadline = DateTime(
+          newDate.year,
+          newDate.month,
+          newDate.day,
+          newTime.hour,
+          newTime.minute,
+        );
+
+        final updated = task.copyWith(
+          deadline: newDeadline,
+          updatedAt: DateTime.now(),
+        );
+        await ref.read(taskNotifierProvider.notifier).updateTask(updated);
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Deadline extended')));
+        }
+      }
+    }
   }
 
   Widget? _buildSubtitle() {

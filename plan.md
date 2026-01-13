@@ -184,19 +184,7 @@
 ---
 
 ### Issue 2.3 — Task Completion & Failure Handling
-**Status:** ⬜ Not Started
-
-**Acceptance Criteria**
-- Tasks can be completed manually
-- Failure reason optional
-- Postpone & extend deadline works
-
-```
-
----
-
-### Issue 2.3 — Task Completion & Failure Handling
-**Status:** ⬜ Not Started
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
 - Tasks can be completed manually
@@ -204,9 +192,30 @@
 - Postpone & extend deadline works
 
 **Completion Notes**
-- 
+- Added complete button (check icon) to TaskListTile for quick task completion
+- Complete dialog offers two options: "Completed" (success) or "Failed" (with optional reason)
+- Failure reason dialog with TextField - completely optional (can be empty or skipped)
+- Task actions menu (3-dot menu) provides:
+  - Mark as Complete (same as quick button)
+  - Postpone (sets isPostponed flag for deadline tasks)
+  - Extend Deadline (date/time picker updates deadline for deadline tasks)
+  - Edit (navigate to TaskInputPage)
+  - Delete (with confirmation dialog)
+- All actions only available for incomplete tasks (except Edit and Delete)
+- Postpone and Extend Deadline only shown for deadline-type tasks
+- Proper mounted checks for all async operations
+- All field updates use copyWith pattern to preserve existing data
+- 8 new provider tests covering:
+  - Successful completion with completionDate
+  - Failed completion with optional failureReason
+  - Task postponement
+  - Deadline extension
+  - Combined operations (postpone then complete, extend then complete)
+- All 62 tests passing (8 new task action tests)
+- Zero flutter analyze issues
+- Clean Riverpod architecture maintained
 
-**Completed:** ⬜
+**Completed:** ✅
 
 ---
 
