@@ -129,7 +129,7 @@
 ## EPIC 2: Task Management (Core)
 
 ### Issue 2.1 — Task Data Model
-**Status:** ⬜ Not Started
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
 - Task model supports:
@@ -139,9 +139,19 @@
   - Postpone & drop states
 
 **Completion Notes**
-- 
+- TaskEntity with three task types: unsure, deadline, timeBased
+- Complete domain entities: TaskEntity and ReminderEntity (immutable)
+- Data models: TaskModel and ReminderModel with database mapping
+- All required fields: title, description, task types, deadlines, time ranges
+- Status fields: isCompleted, completionDate, failureReason (optional)
+- State management: isPostponed, isDropped boolean flags
+- ReminderEntity supports optional reminders linked to tasks via taskId
+- Immutable design with copyWith methods
+- Proper equality and hashCode implementations
+- All 17 tests passing (11 task entity + 6 reminder entity tests)
+- Clean architecture: domain entities separated from data models
 
-**Completed:** ⬜
+**Completed:** ✅
 
 ---
 
