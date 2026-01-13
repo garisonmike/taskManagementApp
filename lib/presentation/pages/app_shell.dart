@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/app_theme.dart';
+import '../providers/theme_provider.dart';
+import 'theme_selection_page.dart';
+
 /// Provider for managing the current navigation index
 final navigationIndexProvider = StateProvider<int>((ref) => 0);
 
@@ -168,11 +172,13 @@ class BlueprintsPage extends StatelessWidget {
 }
 
 /// Settings page - App configuration
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentTheme = ref.watch(currentThemeProvider);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
@@ -191,10 +197,14 @@ class SettingsPage extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.palette_outlined),
             title: const Text('Theme'),
-            subtitle: const Text('Timber Brown (Light)'),
+            subtitle: Text(AppTheme.getThemeName(currentTheme)),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
-              // TODO: Navigate to theme settings
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const ThemeSelectionPage(),
+                ),
+              );
             },
           ),
           const Divider(),
