@@ -47,7 +47,10 @@ lib/
 
 #### 1. **Presentation Layer** (`presentation/`)
 - Contains all UI components (pages, widgets)
-- Manages state using Provider/Riverpod
+- Manages state using **Riverpod** (StateNotifier/AsyncNotifier)
+- Uses feature-scoped providers
+- Immutable state only
+- No business logic in widgets (delegated to use cases)
 - Interacts with domain layer through use cases
 - **Dependency**: Domain layer only
 
@@ -116,7 +119,7 @@ flutter format lib/
 - **Framework**: Flutter
 - **Language**: Dart
 - **Architecture**: Clean Architecture
-- **State Management**: Provider/Riverpod
+- **State Management**: Riverpod (StateNotifier/AsyncNotifier)
 - **Local Storage**: sqflite / Hive (to be determined)
 - **Notifications**: flutter_local_notifications
 - **Platform**: Android only
