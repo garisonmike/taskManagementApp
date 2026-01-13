@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../domain/entities/task_entity.dart';
+import '../providers/task_provider.dart';
 import '../providers/theme_provider.dart';
+import 'task_input_page.dart';
 import 'theme_selection_page.dart';
 
 /// Provider for managing the current navigation index
@@ -60,11 +63,13 @@ class AppShell extends ConsumerWidget {
 }
 
 /// Tasks page - Main task list
-class TasksPage extends StatelessWidget {
+class TasksPage extends ConsumerWidget {
   const TasksPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tasksAsyncValue = ref.watch(taskNotifierProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tasks'),
@@ -77,31 +82,171 @@ class TasksPage extends StatelessWidget {
           ),
         ],
       ),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.task_alt, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text(
-              'No tasks yet',
-              style: TextStyle(fontSize: 18, color: Colors.grey),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Tap + to add your first task',
-              style: TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-          ],
+      body: tasksAsyncValue.when(
+        data: (tasks) {
+          if (tasks.isEmpty) {
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.task_alt, size: 64, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text(
+                    'No tasks yet',
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Tap + to add your first task',
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return ListView.builder(
+            itemCount: tasks.length,
+            itemBuilder: (context, index) {
+              final task = tasks[index];
+              return TaskListTile(task: task);
+            },
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(
+                'Error loading tasks',
+                style: TextStyle(fontSize: 18, color: Colors.grey[800]),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                error.toString(),
+                style: const TextStyle(fontSize: 14, color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  ref.read(taskNotifierProvider.notifier).loadTasks();
+                },
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Navigate to add task
+        onPressed: () async {
+          final result = await Navigator.push<TaskEntity>(
+            context,
+            MaterialPageRoute(builder: (context) => const TaskInputPage()),
+          );
+
+          if (result != null && context.mounted) {
+            await ref.read(taskNotifierProvider.notifier).addTask(result);
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Task saved successfully')),
+              );
+            }
+          }
         },
         child: const Icon(Icons.add),
       ),
     );
+  }
+}
+
+/// Widget for displaying a single task in the list
+class TaskListTile extends ConsumerWidget {
+  final TaskEntity task;
+
+  const TaskListTile({super.key, required this.task});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ListTile(
+      leading: Icon(
+        _getTaskIcon(task.taskType),
+        color: task.isCompleted ? Colors.green : null,
+      ),
+      title: Text(
+        task.title,
+        style: TextStyle(
+          decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+        ),
+      ),
+      subtitle: _buildSubtitle(),
+      trailing: task.isCompleted
+          ? const Icon(Icons.check_circle, color: Colors.green)
+          : null,
+      onTap: () async {
+        final result = await Navigator.push<TaskEntity>(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TaskInputPage(existingTask: task),
+          ),
+        );
+
+        if (result != null && context.mounted) {
+          await ref.read(taskNotifierProvider.notifier).updateTask(result);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Task updated successfully')),
+            );
+          }
+        }
+      },
+    );
+  }
+
+  Widget? _buildSubtitle() {
+    final parts = <String>[];
+
+    if (task.description != null && task.description!.isNotEmpty) {
+      parts.add(task.description!);
+    }
+
+    if (task.taskType == TaskType.deadline && task.deadline != null) {
+      parts.add('Deadline: ${_formatDateTime(task.deadline!)}');
+    }
+
+    if (task.taskType == TaskType.timeBased &&
+        task.timeBasedStart != null &&
+        task.timeBasedEnd != null) {
+      parts.add(
+        '${_formatDateTime(task.timeBasedStart!)} - ${_formatDateTime(task.timeBasedEnd!)}',
+      );
+    }
+
+    if (parts.isEmpty) {
+      return null;
+    }
+
+    return Text(parts.join('\n'), maxLines: 2, overflow: TextOverflow.ellipsis);
+  }
+
+  IconData _getTaskIcon(TaskType type) {
+    switch (type) {
+      case TaskType.unsure:
+        return Icons.help_outline;
+      case TaskType.deadline:
+        return Icons.event;
+      case TaskType.timeBased:
+        return Icons.schedule;
+    }
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.day}/${dateTime.month}/${dateTime.year} '
+        '${dateTime.hour.toString().padLeft(2, '0')}:'
+        '${dateTime.minute.toString().padLeft(2, '0')}';
   }
 }
 

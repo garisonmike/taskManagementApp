@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:task_management_app/domain/entities/task_entity.dart';
+import 'package:task_management_app/domain/repositories/task_repository.dart';
 import 'package:task_management_app/presentation/pages/app_shell.dart';
+import 'package:task_management_app/presentation/providers/task_provider.dart';
 
 void main() {
   group('AppShell Navigation Tests', () {
@@ -9,8 +12,19 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const ProviderScope(child: MaterialApp(home: AppShell())),
+        ProviderScope(
+          overrides: [
+            // Override taskNotifierProvider to provide empty task list
+            taskNotifierProvider.overrideWith(
+              (ref) => TaskNotifier(FakeTaskRepository()),
+            ),
+          ],
+          child: const MaterialApp(home: AppShell()),
+        ),
       );
+
+      // Wait for async operations
+      await tester.pump();
 
       // Verify bottom navigation bar exists
       expect(find.byType(BottomNavigationBar), findsOneWidget);
@@ -24,8 +38,19 @@ void main() {
 
     testWidgets('Default page is Tasks page', (WidgetTester tester) async {
       await tester.pumpWidget(
-        const ProviderScope(child: MaterialApp(home: AppShell())),
+        ProviderScope(
+          overrides: [
+            taskNotifierProvider.overrideWith(
+              (ref) => TaskNotifier(FakeTaskRepository()),
+            ),
+          ],
+          child: const MaterialApp(home: AppShell()),
+        ),
       );
+
+      // Wait for async loading to complete
+      await tester.pump();
+      await tester.pump();
 
       // Tasks page should be visible initially
       expect(find.text('No tasks yet'), findsOneWidget);
@@ -36,12 +61,20 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const ProviderScope(child: MaterialApp(home: AppShell())),
+        ProviderScope(
+          overrides: [
+            taskNotifierProvider.overrideWith(
+              (ref) => TaskNotifier(FakeTaskRepository()),
+            ),
+          ],
+          child: const MaterialApp(home: AppShell()),
+        ),
       );
+      await tester.pump();
 
       // Tap on Reminders tab
       await tester.tap(find.text('Reminders'));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       // Verify Reminders page is displayed
       expect(find.text('No reminders'), findsOneWidget);
@@ -52,12 +85,20 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const ProviderScope(child: MaterialApp(home: AppShell())),
+        ProviderScope(
+          overrides: [
+            taskNotifierProvider.overrideWith(
+              (ref) => TaskNotifier(FakeTaskRepository()),
+            ),
+          ],
+          child: const MaterialApp(home: AppShell()),
+        ),
       );
+      await tester.pump();
 
       // Tap on Blueprints tab
       await tester.tap(find.text('Blueprints'));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       // Verify Blueprints page is displayed
       expect(find.text('No blueprints'), findsOneWidget);
@@ -68,12 +109,20 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const ProviderScope(child: MaterialApp(home: AppShell())),
+        ProviderScope(
+          overrides: [
+            taskNotifierProvider.overrideWith(
+              (ref) => TaskNotifier(FakeTaskRepository()),
+            ),
+          ],
+          child: const MaterialApp(home: AppShell()),
+        ),
       );
+      await tester.pump();
 
       // Tap on Settings tab
       await tester.tap(find.text('Settings'));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       // Verify Settings page is displayed
       expect(find.text('Appearance'), findsOneWidget);
@@ -85,25 +134,36 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const ProviderScope(child: MaterialApp(home: AppShell())),
+        ProviderScope(
+          overrides: [
+            taskNotifierProvider.overrideWith(
+              (ref) => TaskNotifier(FakeTaskRepository()),
+            ),
+          ],
+          child: const MaterialApp(home: AppShell()),
+        ),
       );
+
+      // Wait for async loading to complete
+      await tester.pump();
+      await tester.pump();
 
       // Start on Tasks page
       expect(find.text('No tasks yet'), findsOneWidget);
 
       // Navigate to Reminders
       await tester.tap(find.text('Reminders'));
-      await tester.pumpAndSettle();
+      await tester.pump();
       expect(find.text('No reminders'), findsOneWidget);
 
       // Navigate to Settings
       await tester.tap(find.text('Settings'));
-      await tester.pumpAndSettle();
+      await tester.pump();
       expect(find.text('Theme'), findsOneWidget);
 
       // Navigate back to Tasks
       await tester.tap(find.text('Tasks'));
-      await tester.pumpAndSettle();
+      await tester.pump();
       expect(find.text('No tasks yet'), findsOneWidget);
     });
 
@@ -111,8 +171,16 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const ProviderScope(child: MaterialApp(home: AppShell())),
+        ProviderScope(
+          overrides: [
+            taskNotifierProvider.overrideWith(
+              (ref) => TaskNotifier(FakeTaskRepository()),
+            ),
+          ],
+          child: const MaterialApp(home: AppShell()),
+        ),
       );
+      await tester.pump();
 
       // Initially on Tasks (index 0)
       final bottomNavBar = tester.widget<BottomNavigationBar>(
@@ -122,7 +190,7 @@ void main() {
 
       // Tap Reminders
       await tester.tap(find.text('Reminders'));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       final updatedNavBar = tester.widget<BottomNavigationBar>(
         find.byType(BottomNavigationBar),
@@ -130,4 +198,30 @@ void main() {
       expect(updatedNavBar.currentIndex, 1);
     });
   });
+}
+
+// Fake repository for testing
+class FakeTaskRepository implements TaskRepository {
+  @override
+  Future<List<TaskEntity>> getAllTasks() async => [];
+
+  @override
+  Future<TaskEntity?> getTaskById(String id) async => null;
+
+  @override
+  Future<void> createTask(TaskEntity task) async {}
+
+  @override
+  Future<void> updateTask(TaskEntity task) async {}
+
+  @override
+  Future<void> deleteTask(String id) async {}
+
+  @override
+  Future<List<TaskEntity>> getTasksByStatus({
+    required bool isCompleted,
+  }) async => [];
+
+  @override
+  Future<List<TaskEntity>> getTasksByType(TaskType type) async => [];
 }

@@ -6,12 +6,18 @@ import 'package:sqflite/sqflite.dart';
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._internal();
   static Database? _database;
+  final String? _testPath;
 
   // Database configuration
   static const String _databaseName = 'task_management.db';
   static const int _databaseVersion = 1;
 
-  DatabaseHelper._internal();
+  DatabaseHelper._internal({String? testPath}) : _testPath = testPath;
+
+  /// Factory constructor for testing with in-memory database
+  factory DatabaseHelper.test(String path) {
+    return DatabaseHelper._internal(testPath: path);
+  }
 
   /// Get database instance (singleton)
   Future<Database> get database async {
@@ -22,8 +28,7 @@ class DatabaseHelper {
 
   /// Initialize database with proper path
   Future<Database> _initDatabase() async {
-    final databasesPath = await getDatabasesPath();
-    final path = join(databasesPath, _databaseName);
+    final path = _testPath ?? join(await getDatabasesPath(), _databaseName);
 
     return await openDatabase(
       path,

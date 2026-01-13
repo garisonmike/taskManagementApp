@@ -156,7 +156,7 @@
 ---
 
 ### Issue 2.2 — Add & Edit Tasks UI
-**Status:** ⬜ Not Started
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
 - Add task flow is clean and minimal
@@ -164,9 +164,34 @@
 - No mandatory fields except title
 
 **Completion Notes**
-- 
+- Created TaskInputPage with clean form-based UI for adding and editing tasks
+- Only title field is required (validated), all other fields optional
+- Three task types supported: Unsure, Deadline (with date/time picker), Time-based (with start/end time pickers)
+- Full Riverpod integration: TaskNotifier manages task state, TaskRepository handles persistence
+- Data layer: TaskLocalDataSource with complete CRUD operations
+- Repository pattern: TaskRepository interface with TaskRepositoryImpl
+- Form validation ensures only title is mandatory
+- Edit mode preserves all existing data using TaskEntity.copyWith()
+- Navigation: FAB on TasksPage opens TaskInputPage for add, tap task to edit
+- Task list displays with icons for task types, shows completion status
+- All 54 tests passing (including 24 new task tests + 7 navigation tests)
+- Clean UI with Material 3 design (SegmentedButton, date/time pickers)
+- No build context across async gaps (proper mounted checks)
+- Zero flutter analyze issues
 
-**Completed:** ⬜
+**Completed:** ✅
+
+---
+
+### Issue 2.3 — Task Completion & Failure Handling
+**Status:** ⬜ Not Started
+
+**Acceptance Criteria**
+- Tasks can be completed manually
+- Failure reason optional
+- Postpone & extend deadline works
+
+```
 
 ---
 
