@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:task_management_app/domain/entities/task_entity.dart';
 import 'package:task_management_app/domain/repositories/task_repository.dart';
 import 'package:task_management_app/presentation/pages/app_shell.dart';
+import 'package:task_management_app/presentation/providers/reminder_provider.dart';
 import 'package:task_management_app/presentation/providers/task_provider.dart';
 
 void main() {
@@ -66,15 +67,16 @@ void main() {
             taskNotifierProvider.overrideWith(
               (ref) => TaskNotifier(FakeTaskRepository()),
             ),
+            remindersByDateProvider.overrideWith((ref) async => {}),
           ],
           child: const MaterialApp(home: AppShell()),
         ),
       );
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       // Tap on Reminders tab
       await tester.tap(find.text('Reminders'));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       // Verify Reminders page is displayed
       expect(find.text('No reminders'), findsOneWidget);
@@ -139,31 +141,31 @@ void main() {
             taskNotifierProvider.overrideWith(
               (ref) => TaskNotifier(FakeTaskRepository()),
             ),
+            remindersByDateProvider.overrideWith((ref) async => {}),
           ],
           child: const MaterialApp(home: AppShell()),
         ),
       );
 
       // Wait for async loading to complete
-      await tester.pump();
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       // Start on Tasks page
       expect(find.text('No tasks yet'), findsOneWidget);
 
       // Navigate to Reminders
       await tester.tap(find.text('Reminders'));
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(find.text('No reminders'), findsOneWidget);
 
       // Navigate to Settings
       await tester.tap(find.text('Settings'));
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(find.text('Theme'), findsOneWidget);
 
       // Navigate back to Tasks
       await tester.tap(find.text('Tasks'));
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(find.text('No tasks yet'), findsOneWidget);
     });
 

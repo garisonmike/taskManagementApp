@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../domain/entities/task_entity.dart';
 import '../providers/task_provider.dart';
 import '../providers/theme_provider.dart';
+import 'reminders_page.dart';
 import 'task_input_page.dart';
 import 'theme_selection_page.dart';
 
@@ -528,36 +529,6 @@ class TaskListTile extends ConsumerWidget {
     return '${dateTime.day}/${dateTime.month}/${dateTime.year} '
         '${dateTime.hour.toString().padLeft(2, '0')}:'
         '${dateTime.minute.toString().padLeft(2, '0')}';
-  }
-}
-
-/// Reminders page - View and manage reminders
-class RemindersPage extends StatelessWidget {
-  const RemindersPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Reminders')),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.notifications_none, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text(
-              'No reminders',
-              style: TextStyle(fontSize: 18, color: Colors.grey),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Set reminders for your tasks',
-              style: TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 

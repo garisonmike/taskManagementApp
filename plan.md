@@ -250,7 +250,7 @@
 ---
 
 ### Issue 3.2 — Reminder Management Page
-**Status:** ⬜ Not Started
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
 - View reminders by day
@@ -258,9 +258,22 @@
 - No accidental task deletion
 
 **Completion Notes**
-- 
+- Implemented RemindersPage with day-based reminder grouping
+- Date sections show "Today", "Tomorrow", or formatted date (e.g., "Monday, Jan 15")
+- Each reminder displays: notification icon, task title, reminder time
+- Enable/disable toggle: Updates database and schedules/cancels notifications in real-time
+- Edit time: Date and time pickers allow changing reminder schedule
+- Delete reminder: Confirmation dialog explicitly states "The task will not be deleted"
+- ReminderWithTask combines reminder and task data for display
+- remindersByDateProvider groups reminders by date, sorted by time
+- Complete data layer: ReminderLocalDataSource, ReminderModel, ReminderRepository
+- Integration with NotificationService for scheduling updates
+- Empty state: Shows "No reminders" message with icon
+- All 71 tests passing (4 new reminder repository tests)
+- Zero flutter analyze issues
+- Clean Riverpod architecture: repository pattern, immutable state
 
-**Completed:** ⬜
+**Completed:** ✅
 
 ---
 
