@@ -278,7 +278,7 @@
 ---
 
 ### Issue 3.3 — Inactivity Reminder
-**Status:** ⬜ Not Started
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
 - Triggers when no tasks exist
@@ -286,9 +286,22 @@
 - Can be disabled
 
 **Completion Notes**
-- 
+- Implemented InactivityReminderService for managing daily inactivity notifications
+- Automatic triggering: Monitors task count and schedules reminder only when no tasks exist
+- Configuration UI in Settings page with enable/disable toggle and time picker
+- Default time: 09:00 (9 AM), user can configure any time via time picker
+- Settings persistence: Uses existing settings table with keys 'inactivity_reminder_enabled' and 'inactivity_reminder_time'
+- Integration with TaskNotifier: Automatically updates reminder when tasks are added or deleted
+- Smart scheduling: Schedules for tomorrow if configured time has passed today
+- Cancellation: Automatically cancels reminder when tasks are added
+- Clean UI: Shows "Daily at HH:mm" when enabled, "Disabled" when off
+- Tap tile to configure time (only when enabled)
+- All 72 tests passing (1 new service structure test)
+- Zero flutter analyze issues
+- Successful Android APK build
+- Clean Riverpod architecture with provider pattern
 
-**Completed:** ⬜
+**Completed:** ✅
 
 ---
 

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../domain/entities/task_entity.dart';
+import '../providers/inactivity_reminder_provider.dart';
 import '../providers/task_provider.dart';
 import '../providers/theme_provider.dart';
 import 'reminders_page.dart';
@@ -608,6 +609,19 @@ class SettingsPage extends ConsumerWidget {
           const Padding(
             padding: EdgeInsets.all(16.0),
             child: Text(
+              'Notifications',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+          _InactivityReminderTile(),
+          const Divider(),
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
               'Data',
               style: TextStyle(
                 fontSize: 14,
@@ -652,5 +666,84 @@ class SettingsPage extends ConsumerWidget {
         ],
       ),
     );
+  }
+}
+
+/// Inactivity reminder configuration tile
+class _InactivityReminderTile extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final enabledAsync = ref.watch(inactivityReminderEnabledProvider);
+    final timeAsync = ref.watch(inactivityReminderTimeProvider);
+
+    return enabledAsync.when(
+      data: (enabled) => ListTile(
+        leading: const Icon(Icons.notifications_paused_outlined),
+        title: const Text('Inactivity Reminder'),
+        subtitle: timeAsync.when(
+          data: (time) => Text(enabled ? 'Daily at $time' : 'Disabled'),
+          loading: () => const Text('Loading...'),
+          error: (_, __) => const Text('Error loading time'),
+        ),
+        trailing: Switch(
+          value: enabled,
+          onChanged: (value) async {
+            final service = ref.read(inactivityReminderServiceProvider);
+            await service.setEnabled(value);
+            ref.invalidate(inactivityReminderEnabledProvider);
+          },
+        ),
+        onTap: enabled
+            ? () => _showTimePickerDialog(
+                context,
+                ref,
+                timeAsync.value ?? '09:00',
+              )
+            : null,
+      ),
+      loading: () => const ListTile(
+        leading: Icon(Icons.notifications_paused_outlined),
+        title: Text('Inactivity Reminder'),
+        subtitle: Text('Loading...'),
+      ),
+      error: (_, __) => const ListTile(
+        leading: Icon(Icons.notifications_paused_outlined),
+        title: Text('Inactivity Reminder'),
+        subtitle: Text('Error loading settings'),
+      ),
+    );
+  }
+
+  Future<void> _showTimePickerDialog(
+    BuildContext context,
+    WidgetRef ref,
+    String currentTime,
+  ) async {
+    final timeParts = currentTime.split(':');
+    final currentTimeOfDay = TimeOfDay(
+      hour: int.parse(timeParts[0]),
+      minute: int.parse(timeParts[1]),
+    );
+
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: currentTimeOfDay,
+    );
+
+    if (picked != null && context.mounted) {
+      final timeString =
+          '${picked.hour.toString().padLeft(2, '0')}:'
+          '${picked.minute.toString().padLeft(2, '0')}';
+
+      final service = ref.read(inactivityReminderServiceProvider);
+      await service.setReminderTime(timeString);
+      ref.invalidate(inactivityReminderTimeProvider);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Inactivity reminder set for $timeString')),
+        );
+      }
+    }
   }
 }

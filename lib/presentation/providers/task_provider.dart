@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/services/inactivity_reminder_service.dart';
 import '../../data/repositories/task_repository_impl.dart';
 import '../../domain/entities/task_entity.dart';
 import '../../domain/repositories/task_repository.dart';
@@ -33,6 +34,7 @@ class TaskNotifier extends StateNotifier<AsyncValue<List<TaskEntity>>> {
     try {
       await _repository.createTask(task);
       await loadTasks(); // Refresh the list
+      await _updateInactivityReminder();
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
     }
@@ -53,8 +55,19 @@ class TaskNotifier extends StateNotifier<AsyncValue<List<TaskEntity>>> {
     try {
       await _repository.deleteTask(id);
       await loadTasks(); // Refresh the list
+      await _updateInactivityReminder();
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
+    }
+  }
+
+  /// Update inactivity reminder based on task count
+  Future<void> _updateInactivityReminder() async {
+    try {
+      final service = InactivityReminderService();
+      await service.updateReminderBasedOnTasks();
+    } catch (error) {
+      // Silently fail - inactivity reminder is not critical
     }
   }
 
