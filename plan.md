@@ -222,7 +222,7 @@
 ## EPIC 3: Notifications & Reminders
 
 ### Issue 3.1 — Notification Engine
-**Status:** ⬜ Not Started
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
 - Notifications fire reliably
@@ -230,9 +230,22 @@
 - Privacy settings respected
 
 **Completion Notes**
-- 
+- Implemented NotificationService singleton with flutter_local_notifications integration
+- Complete notification lifecycle: initialize(), scheduleNotification(), cancelNotification(), cancelAllNotifications()
+- ReminderScheduler bridges ReminderEntity/TaskEntity to NotificationService
+- Android permissions configured: POST_NOTIFICATIONS, RECEIVE_BOOT_COMPLETED, SCHEDULE_EXACT_ALARM, USE_EXACT_ALARM
+- Boot persistence: ScheduledNotificationBootReceiver ensures notifications survive app close and phone reboot
+- Exact timing: Uses AndroidScheduleMode.exactAllowWhileIdle for reliable notification delivery
+- Privacy respected: permission_handler requests user consent before enabling notifications
+- Timezone support: timezone package ensures accurate scheduling across time zones
+- Main.dart initialization: async setup ensures NotificationService ready before app runs
+- Smart scheduling: Past reminders silently skipped, disabled reminders respected
+- All 67 tests passing (2 new service structure tests + 65 existing)
+- Zero flutter analyze issues
+- Android build successful with core library desugaring enabled
+- Clean architecture: services layer independent of UI, ready for provider integration
 
-**Completed:** ⬜
+**Completed:** ✅
 
 ---
 
