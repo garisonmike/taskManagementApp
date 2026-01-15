@@ -449,16 +449,33 @@
 ---
 
 ### Issue 6.2 — Weekly Summary Generator
-**Status:** ⬜ Not Started
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
 - Saturday summary generated automatically
 - Completion rate accurate
 
 **Completion Notes**
-- 
+- Created WeeklySummaryEntity with comprehensive weekly statistics (total, completed, failed, postponed, dropped, deleted tasks)
+- Completion rate accurately calculated: (completedTasks / totalTasks) * 100
+- WeeklySummaryService generates summaries from task logs with accurate counting
+- Database schema updated to v2 with weekly_summaries table
+- Data layer: WeeklySummaryModel, WeeklySummaryLocalDataSource, WeeklySummaryRepository
+- Auto-generation logic: autoGenerateWeeklySummary() checks if today is Saturday
+- Duplicate prevention: Only generates if summary doesn't already exist for the week
+- Week calculation: Properly identifies Monday-Sunday week boundaries
+- WeeklySummariesPage: Visual display with completion rate, progress bar, task breakdown
+- Accessible from Task Logs page: Added analytics icon button in app bar
+- Manual generation: Users can manually generate summaries via + button
+- Color-coded completion rates: Green (≥80%), Orange (≥60%), Red (<60%)
+- Task breakdown shows: Total, Completed, Failed, Postponed, Dropped, Deleted tasks
+- Clean architecture: Domain entity → Data model/datasource → Repository → Service → UI
+- All 89 tests passing (1 test updated for database v2)
+- Zero flutter analyze issues
+- Riverpod providers: weeklySummaryServiceProvider, weeklySummariesProvider
+- Database migration: v1 to v2 with weekly_summaries table creation
 
-**Completed:** ⬜
+**Completed:** ✅
 
 ---
 

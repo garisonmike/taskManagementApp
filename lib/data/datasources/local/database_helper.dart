@@ -10,7 +10,7 @@ class DatabaseHelper {
 
   // Database configuration
   static const String _databaseName = 'task_management.db';
-  static const int _databaseVersion = 1;
+  static const int _databaseVersion = 2;
 
   DatabaseHelper._internal({String? testPath}) : _testPath = testPath;
 
@@ -118,6 +118,23 @@ class DatabaseHelper {
       )
     ''');
 
+    // Weekly summaries table
+    await db.execute('''
+      CREATE TABLE weekly_summaries (
+        id TEXT PRIMARY KEY,
+        week_start_date TEXT NOT NULL,
+        week_end_date TEXT NOT NULL,
+        total_tasks INTEGER NOT NULL,
+        completed_tasks INTEGER NOT NULL,
+        failed_tasks INTEGER NOT NULL,
+        postponed_tasks INTEGER NOT NULL,
+        dropped_tasks INTEGER NOT NULL,
+        deleted_tasks INTEGER NOT NULL,
+        completion_rate REAL NOT NULL,
+        created_at TEXT NOT NULL
+      )
+    ''');
+
     // Create indexes for better query performance
     await db.execute('CREATE INDEX idx_tasks_deadline ON tasks(deadline)');
     await db.execute('CREATE INDEX idx_tasks_created_at ON tasks(created_at)');
@@ -134,10 +151,24 @@ class DatabaseHelper {
 
   /// Handle database upgrades for future schema versions
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // Version 2 migrations will go here
-    // if (oldVersion < 2) {
-    //   await db.execute('ALTER TABLE tasks ADD COLUMN new_field TEXT');
-    // }
+    // Version 2: Add weekly_summaries table
+    if (oldVersion < 2) {
+      await db.execute('''
+        CREATE TABLE weekly_summaries (
+          id TEXT PRIMARY KEY,
+          week_start_date TEXT NOT NULL,
+          week_end_date TEXT NOT NULL,
+          total_tasks INTEGER NOT NULL,
+          completed_tasks INTEGER NOT NULL,
+          failed_tasks INTEGER NOT NULL,
+          postponed_tasks INTEGER NOT NULL,
+          dropped_tasks INTEGER NOT NULL,
+          deleted_tasks INTEGER NOT NULL,
+          completion_rate REAL NOT NULL,
+          created_at TEXT NOT NULL
+        )
+      ''');
+    }
 
     // Version 3 migrations will go here
     // if (oldVersion < 3) {

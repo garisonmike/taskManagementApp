@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../domain/entities/task_log_entity.dart';
 import '../providers/task_log_provider.dart';
 import '../providers/task_provider.dart';
+import 'weekly_summaries_page.dart';
 
 /// Page for viewing task logs with settings for bulk deletion
 class TaskLogsPage extends ConsumerStatefulWidget {
@@ -21,6 +22,17 @@ class _TaskLogsPageState extends ConsumerState<TaskLogsPage> {
       appBar: AppBar(
         title: const Text('Task Logs'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.analytics_outlined),
+            tooltip: 'Weekly Summaries',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const WeeklySummariesPage(),
+                ),
+              );
+            },
+          ),
           PopupMenuButton<String>(
             onSelected: (value) async {
               if (value == 'delete_all') {
