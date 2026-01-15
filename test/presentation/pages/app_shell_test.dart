@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:task_management_app/domain/entities/task_entity.dart';
 import 'package:task_management_app/domain/repositories/task_repository.dart';
 import 'package:task_management_app/presentation/pages/app_shell.dart';
+import 'package:task_management_app/presentation/providers/blueprint_provider.dart';
 import 'package:task_management_app/presentation/providers/reminder_provider.dart';
 import 'package:task_management_app/presentation/providers/task_provider.dart';
 
@@ -92,15 +93,16 @@ void main() {
             taskNotifierProvider.overrideWith(
               (ref) => TaskNotifier(FakeTaskRepository()),
             ),
+            blueprintsProvider.overrideWith((ref) async => []),
           ],
           child: const MaterialApp(home: AppShell()),
         ),
       );
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       // Tap on Blueprints tab
       await tester.tap(find.text('Blueprints'));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       // Verify Blueprints page is displayed
       expect(find.text('No blueprints'), findsOneWidget);

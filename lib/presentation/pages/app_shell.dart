@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../domain/entities/task_entity.dart';
 import '../providers/alarm_provider.dart';
+import '../providers/blueprint_provider.dart';
 import '../providers/inactivity_reminder_provider.dart';
 import '../providers/task_provider.dart';
 import '../providers/theme_provider.dart';
+import 'blueprint_input_page.dart';
 import 'reminders_page.dart';
 import 'task_input_page.dart';
 import 'theme_selection_page.dart';
@@ -535,36 +537,193 @@ class TaskListTile extends ConsumerWidget {
 }
 
 /// Blueprints page - Manage recurring task templates
-class BlueprintsPage extends StatelessWidget {
+class BlueprintsPage extends ConsumerWidget {
   const BlueprintsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final blueprintsAsync = ref.watch(blueprintsProvider);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Blueprints')),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.repeat, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text(
-              'No blueprints',
-              style: TextStyle(fontSize: 18, color: Colors.grey),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Create recurring task templates',
-              style: TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-          ],
-        ),
+      appBar: AppBar(
+        title: const Text('Blueprints'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.filter_list),
+            onPressed: () {
+              // TODO: Add filter options
+            },
+          ),
+        ],
+      ),
+      body: blueprintsAsync.when(
+        data: (blueprints) {
+          if (blueprints.isEmpty) {
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.repeat, size: 64, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text(
+                    'No blueprints',
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Create recurring task templates',
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(8),
+            itemCount: blueprints.length,
+            itemBuilder: (context, index) {
+              final blueprint = blueprints[index];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: blueprint.isActive
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.grey,
+                    child: Icon(
+                      blueprint.isActive ? Icons.repeat : Icons.pause,
+                      color: Colors.white,
+                    ),
+                  ),
+                  title: Text(blueprint.name),
+                  subtitle: blueprint.description != null
+                      ? Text(
+                          blueprint.description!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        )
+                      : Text(
+                          blueprint.isActive ? 'Active' : 'Inactive',
+                          style: TextStyle(
+                            color: blueprint.isActive
+                                ? Colors.green
+                                : Colors.grey,
+                          ),
+                        ),
+                  trailing: PopupMenuButton(
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit),
+                            SizedBox(width: 8),
+                            Text('Edit'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text('Delete', style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                      ),
+                    ],
+                    onSelected: (value) async {
+                      if (value == 'edit') {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                BlueprintInputPage(blueprint: blueprint),
+                          ),
+                        );
+                        ref.invalidate(blueprintsProvider);
+                      } else if (value == 'delete') {
+                        _showDeleteConfirmation(context, ref, blueprint.id);
+                      }
+                    },
+                  ),
+                  onTap: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            BlueprintInputPage(blueprint: blueprint),
+                      ),
+                    );
+                    ref.invalidate(blueprintsProvider);
+                  },
+                ),
+              );
+            },
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) =>
+            Center(child: Text('Error loading blueprints: $error')),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Navigate to add blueprint
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const BlueprintInputPage()),
+          );
+          ref.invalidate(blueprintsProvider);
         },
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(
+    BuildContext context,
+    WidgetRef ref,
+    String blueprintId,
+  ) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Blueprint'),
+        content: const Text(
+          'Are you sure you want to delete this blueprint? '
+          'This will not affect any existing tasks created from this blueprint.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              try {
+                final repository = ref.read(blueprintRepositoryProvider);
+                await repository.deleteBlueprint(blueprintId);
+                ref.invalidate(blueprintsProvider);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Blueprint deleted successfully'),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error deleting blueprint: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
       ),
     );
   }

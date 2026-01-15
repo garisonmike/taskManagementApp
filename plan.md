@@ -365,16 +365,28 @@
 ---
 
 ### Issue 5.2 — Blueprint Editor Page
-**Status:** ⬜ Not Started
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
 - Create, edit, delete blueprints
 - Editing does not affect past data
 
 **Completion Notes**
-- 
+- Created BlueprintInputPage with comprehensive blueprint and task management
+- Full CRUD operations: Create new blueprints with name, description, active/inactive status
+- Edit existing blueprints: Tap blueprint to edit, all fields modifiable including associated tasks
+- Delete blueprints: Popup menu with confirmation dialog, cascades to blueprint_tasks
+- Task management within blueprint: Add, edit, delete tasks with title, description, task type, default time
+- BlueprintsPage: List view with active/inactive indicators, empty state, FAB for creation
+- Clean separation: Blueprints are templates only, stored independently from tasks table
+- Repository ensures editing blueprints (updates updated_at) never touches existing generated tasks
+- All 89 tests passing (no new tests - UI layer)
+- Zero flutter analyze issues
+- Timestamp-based ID generation consistent with existing code patterns
+- Material 3 design with proper form validation and user feedback
+- Riverpod architecture maintained with provider invalidation for state management
 
-**Completed:** ⬜
+**Completed:** ✅
 
 ---
 
