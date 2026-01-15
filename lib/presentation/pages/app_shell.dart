@@ -11,6 +11,7 @@ import '../providers/theme_provider.dart';
 import 'blueprint_input_page.dart';
 import 'reminders_page.dart';
 import 'task_input_page.dart';
+import 'task_logs_page.dart';
 import 'theme_selection_page.dart';
 
 /// Provider for managing the current navigation index
@@ -962,6 +963,16 @@ class SettingsPage extends ConsumerWidget {
                 color: Colors.grey,
               ),
             ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.history),
+            title: const Text('Task Logs'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const TaskLogsPage()),
+              );
+            },
           ),
           ListTile(
             leading: const Icon(Icons.download_outlined),

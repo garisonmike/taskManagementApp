@@ -126,11 +126,16 @@ void main() {
 
       // Tap on Settings tab
       await tester.tap(find.text('Settings'));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       // Verify Settings page is displayed
       expect(find.text('Appearance'), findsOneWidget);
       expect(find.text('Theme'), findsOneWidget);
+
+      // Scroll down to see Export Data (it may be below the fold)
+      await tester.drag(find.text('Theme'), const Offset(0, -300));
+      await tester.pumpAndSettle();
+
       expect(find.text('Export Data'), findsOneWidget);
     });
 

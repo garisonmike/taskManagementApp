@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/services/inactivity_reminder_service.dart';
 import '../../data/repositories/task_repository_impl.dart';
 import '../../domain/entities/task_entity.dart';
+import '../../domain/entities/task_log_entity.dart';
+import '../../domain/repositories/task_log_repository.dart';
 import '../../domain/repositories/task_repository.dart';
+import 'task_log_provider.dart';
 
 /// Provider for TaskRepository
 final taskRepositoryProvider = Provider<TaskRepository>((ref) {
@@ -13,8 +16,11 @@ final taskRepositoryProvider = Provider<TaskRepository>((ref) {
 /// State notifier for managing tasks
 class TaskNotifier extends StateNotifier<AsyncValue<List<TaskEntity>>> {
   final TaskRepository _repository;
+  final TaskLogRepository? _logRepository;
 
-  TaskNotifier(this._repository) : super(const AsyncValue.loading()) {
+  TaskNotifier(this._repository, {TaskLogRepository? logRepository})
+    : _logRepository = logRepository,
+      super(const AsyncValue.loading()) {
     loadTasks();
   }
 
@@ -33,6 +39,7 @@ class TaskNotifier extends StateNotifier<AsyncValue<List<TaskEntity>>> {
   Future<void> addTask(TaskEntity task) async {
     try {
       await _repository.createTask(task);
+      await _logAction(task.id, TaskLogAction.created);
       await loadTasks(); // Refresh the list
       await _updateInactivityReminder();
     } catch (error, stackTrace) {
@@ -43,7 +50,32 @@ class TaskNotifier extends StateNotifier<AsyncValue<List<TaskEntity>>> {
   /// Update an existing task
   Future<void> updateTask(TaskEntity task) async {
     try {
+      // Fetch old task to detect state changes
+      final oldTask = await _repository.getTaskById(task.id);
+
       await _repository.updateTask(task);
+
+      // Determine the appropriate log action based on state changes
+      TaskLogAction action = TaskLogAction.edited;
+      Map<String, dynamic>? metadata;
+
+      if (oldTask != null) {
+        // Check for state transitions
+        if (!oldTask.isCompleted && task.isCompleted) {
+          if (task.failureReason != null && task.failureReason!.isNotEmpty) {
+            action = TaskLogAction.failed;
+            metadata = {'reason': task.failureReason};
+          } else {
+            action = TaskLogAction.completed;
+          }
+        } else if (!oldTask.isPostponed && task.isPostponed) {
+          action = TaskLogAction.postponed;
+        } else if (!oldTask.isDropped && task.isDropped) {
+          action = TaskLogAction.dropped;
+        }
+      }
+
+      await _logAction(task.id, action, metadata);
       await loadTasks(); // Refresh the list
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
@@ -54,10 +86,34 @@ class TaskNotifier extends StateNotifier<AsyncValue<List<TaskEntity>>> {
   Future<void> deleteTask(String id) async {
     try {
       await _repository.deleteTask(id);
+      await _logAction(id, TaskLogAction.deleted);
       await loadTasks(); // Refresh the list
       await _updateInactivityReminder();
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
+    }
+  }
+
+  /// Log a task action
+  Future<void> _logAction(
+    String taskId,
+    TaskLogAction action, [
+    Map<String, dynamic>? metadata,
+  ]) async {
+    if (_logRepository == null) return;
+
+    final log = TaskLogEntity(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      taskId: taskId,
+      action: action,
+      timestamp: DateTime.now(),
+      metadata: metadata,
+    );
+
+    try {
+      await _logRepository.createLog(log);
+    } catch (error) {
+      // Silently fail - logging should not break core functionality
     }
   }
 
@@ -85,5 +141,6 @@ class TaskNotifier extends StateNotifier<AsyncValue<List<TaskEntity>>> {
 final taskNotifierProvider =
     StateNotifierProvider<TaskNotifier, AsyncValue<List<TaskEntity>>>((ref) {
       final repository = ref.watch(taskRepositoryProvider);
-      return TaskNotifier(repository);
+      final logRepository = ref.watch(taskLogRepositoryProvider);
+      return TaskNotifier(repository, logRepository: logRepository);
     });

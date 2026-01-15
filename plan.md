@@ -419,16 +419,32 @@
 ## EPIC 6: Logs & Analytics
 
 ### Issue 6.1 — Immutable Logging System
-**Status:** ⬜ Not Started
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
 - Logs are append-only
 - Deletion controlled via settings
 
 **Completion Notes**
-- 
+- Implemented append-only logging system with TaskLogEntity, TaskLogRepository, and TaskLogLocalDataSource
+- TaskLogAction enum: created, completed, failed, postponed, dropped, edited, deleted
+- Logs are immutable - only createLog method exists, no update operations
+- TaskNotifier integration: Logs all task operations (create, update, delete, complete, fail, postpone, drop)
+- Smart action detection: Detects state transitions to log specific actions (completed vs failed vs postponed vs dropped)
+- Metadata support: Failed tasks store failure reason in metadata field as JSON
+- TaskLogsPage: View all logs grouped by date (Today/Yesterday/formatted date)
+- Log viewing: Shows task title, action icon, timestamp, and metadata info button
+- Settings integration: Added "Task Logs" entry in Data section with history icon
+- Deletion controls: PopupMenu with "Delete Old Logs" (7/30/90 days) and "Delete All Logs" options
+- Confirmation dialogs: Protect users from accidental deletions
+- Empty state: Shows "No logs yet" message with history icon
+- Clean architecture: Domain entity → Data model/datasource → Repository → Provider → UI
+- All 89 tests passing (1 test updated for settings page scroll)
+- Zero flutter analyze issues
+- Riverpod providers: taskLogLocalDataSourceProvider, taskLogRepositoryProvider
+- Database integration: Uses existing task_logs table (id, task_id, action, timestamp, metadata)
 
-**Completed:** ⬜
+**Completed:** ✅
 
 ---
 
