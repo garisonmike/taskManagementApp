@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:task_management_app/data/datasources/local/settings_local_data_source.dart';
 import 'package:task_management_app/domain/entities/task_entity.dart';
 import 'package:task_management_app/domain/repositories/task_repository.dart';
 import 'package:task_management_app/presentation/pages/app_shell.dart';
 import 'package:task_management_app/presentation/providers/blueprint_provider.dart';
+import 'package:task_management_app/presentation/providers/heatmap_provider.dart';
 import 'package:task_management_app/presentation/providers/reminder_provider.dart';
 import 'package:task_management_app/presentation/providers/task_provider.dart';
 
@@ -19,6 +21,10 @@ void main() {
             // Override taskNotifierProvider to provide empty task list
             taskNotifierProvider.overrideWith(
               (ref) => TaskNotifier(FakeTaskRepository()),
+            ),
+            // Override heatmap visibility to avoid database access in tests
+            heatmapVisibilityProvider.overrideWith(
+              (ref) => HeatmapVisibilityNotifierTest(),
             ),
           ],
           child: const MaterialApp(home: AppShell()),
@@ -45,6 +51,9 @@ void main() {
             taskNotifierProvider.overrideWith(
               (ref) => TaskNotifier(FakeTaskRepository()),
             ),
+            heatmapVisibilityProvider.overrideWith(
+              (ref) => HeatmapVisibilityNotifierTest(),
+            ),
           ],
           child: const MaterialApp(home: AppShell()),
         ),
@@ -69,6 +78,9 @@ void main() {
               (ref) => TaskNotifier(FakeTaskRepository()),
             ),
             remindersByDateProvider.overrideWith((ref) async => {}),
+            heatmapVisibilityProvider.overrideWith(
+              (ref) => HeatmapVisibilityNotifierTest(),
+            ),
           ],
           child: const MaterialApp(home: AppShell()),
         ),
@@ -94,6 +106,9 @@ void main() {
               (ref) => TaskNotifier(FakeTaskRepository()),
             ),
             blueprintsProvider.overrideWith((ref) async => []),
+            heatmapVisibilityProvider.overrideWith(
+              (ref) => HeatmapVisibilityNotifierTest(),
+            ),
           ],
           child: const MaterialApp(home: AppShell()),
         ),
@@ -117,6 +132,9 @@ void main() {
           overrides: [
             taskNotifierProvider.overrideWith(
               (ref) => TaskNotifier(FakeTaskRepository()),
+            ),
+            heatmapVisibilityProvider.overrideWith(
+              (ref) => HeatmapVisibilityNotifierTest(),
             ),
           ],
           child: const MaterialApp(home: AppShell()),
@@ -149,6 +167,9 @@ void main() {
               (ref) => TaskNotifier(FakeTaskRepository()),
             ),
             remindersByDateProvider.overrideWith((ref) async => {}),
+            heatmapVisibilityProvider.overrideWith(
+              (ref) => HeatmapVisibilityNotifierTest(),
+            ),
           ],
           child: const MaterialApp(home: AppShell()),
         ),
@@ -185,6 +206,9 @@ void main() {
             taskNotifierProvider.overrideWith(
               (ref) => TaskNotifier(FakeTaskRepository()),
             ),
+            heatmapVisibilityProvider.overrideWith(
+              (ref) => HeatmapVisibilityNotifierTest(),
+            ),
           ],
           child: const MaterialApp(home: AppShell()),
         ),
@@ -207,6 +231,31 @@ void main() {
       expect(updatedNavBar.currentIndex, 1);
     });
   });
+}
+
+// Fake heatmap visibility notifier for testing
+class HeatmapVisibilityNotifierTest extends HeatmapVisibilityNotifier {
+  HeatmapVisibilityNotifierTest() : super(FakeSettingsDataSource()) {
+    state = const AsyncValue.data(true); // Default to visible
+  }
+}
+
+// Fake settings data source
+class FakeSettingsDataSource implements SettingsLocalDataSource {
+  @override
+  Future<void> saveSetting(String key, String value) async {}
+
+  @override
+  Future<String?> getSetting(String key) async => 'true';
+
+  @override
+  Future<Map<String, String>> getAllSettings() async => {};
+
+  @override
+  Future<void> deleteSetting(String key) async {}
+
+  @override
+  Future<void> clearAllSettings() async {}
 }
 
 // Fake repository for testing

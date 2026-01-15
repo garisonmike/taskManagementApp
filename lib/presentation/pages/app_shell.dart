@@ -5,9 +5,11 @@ import '../../core/theme/app_theme.dart';
 import '../../domain/entities/task_entity.dart';
 import '../providers/alarm_provider.dart';
 import '../providers/blueprint_provider.dart';
+import '../providers/heatmap_provider.dart';
 import '../providers/inactivity_reminder_provider.dart';
 import '../providers/task_provider.dart';
 import '../providers/theme_provider.dart';
+import '../widgets/completion_heatmap.dart';
 import 'blueprint_input_page.dart';
 import 'reminders_page.dart';
 import 'task_input_page.dart';
@@ -75,6 +77,7 @@ class TasksPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tasksAsyncValue = ref.watch(taskNotifierProvider);
+    final heatmapVisibility = ref.watch(heatmapVisibilityProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -91,32 +94,48 @@ class TasksPage extends ConsumerWidget {
       body: tasksAsyncValue.when(
         data: (tasks) {
           if (tasks.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.task_alt, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text(
-                    'No tasks yet',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
+            return Column(
+              children: [
+                // Show heatmap even when no tasks
+                if (heatmapVisibility.value == true) const CompletionHeatmap(),
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.task_alt, size: 64, color: Colors.grey),
+                        SizedBox(height: 16),
+                        Text(
+                          'No tasks yet',
+                          style: TextStyle(fontSize: 18, color: Colors.grey),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Tap + to add your first task',
+                          style: TextStyle(fontSize: 14, color: Colors.grey),
+                        ),
+                      ],
+                    ),
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Tap + to add your first task',
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                ],
-              ),
+                ),
+              ],
             );
           }
 
-          return ListView.builder(
-            itemCount: tasks.length,
-            itemBuilder: (context, index) {
-              final task = tasks[index];
-              return TaskListTile(task: task);
-            },
+          return Column(
+            children: [
+              // Show heatmap at the top
+              if (heatmapVisibility.value == true) const CompletionHeatmap(),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: tasks.length,
+                  itemBuilder: (context, index) {
+                    final task = tasks[index];
+                    return TaskListTile(task: task);
+                  },
+                ),
+              ),
+            ],
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -956,6 +975,19 @@ class SettingsPage extends ConsumerWidget {
           const Padding(
             padding: EdgeInsets.all(16.0),
             child: Text(
+              'Display',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+          _HeatmapVisibilityTile(),
+          const Divider(),
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
               'Data',
               style: TextStyle(
                 fontSize: 14,
@@ -1235,5 +1267,39 @@ class _AlarmsTile extends ConsumerWidget {
         }
       }
     }
+  }
+}
+
+/// Tile for toggling completion heatmap visibility
+class _HeatmapVisibilityTile extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final heatmapVisibility = ref.watch(heatmapVisibilityProvider);
+
+    return heatmapVisibility.when(
+      data: (isVisible) => SwitchListTile(
+        secondary: const Icon(Icons.grid_on),
+        title: const Text('Completion Heatmap'),
+        subtitle: Text(isVisible ? 'Visible on Tasks page' : 'Hidden'),
+        value: isVisible,
+        onChanged: (value) {
+          ref.read(heatmapVisibilityProvider.notifier).setVisibility(value);
+        },
+      ),
+      loading: () => const ListTile(
+        leading: Icon(Icons.grid_on),
+        title: Text('Completion Heatmap'),
+        trailing: SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+      error: (_, __) => const ListTile(
+        leading: Icon(Icons.grid_on),
+        title: Text('Completion Heatmap'),
+        subtitle: Text('Error loading setting'),
+      ),
+    );
   }
 }

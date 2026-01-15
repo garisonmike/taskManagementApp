@@ -480,16 +480,33 @@
 ---
 
 ### Issue 6.3 — GitHub-Style Completion Graph
-**Status:** ⬜ Not Started
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
 - Heatmap renders correctly
 - Can be disabled
 
 **Completion Notes**
-- 
+- Created CompletionHeatmap widget (249 lines): GitHub-style heatmap with ~1 year of daily completion activity
+- Heatmap layout: Cell-based grid showing ~365 days (52+ weeks), rows for Monday-Sunday
+- Cell size: 12x12 pixels with 2px spacing for visual clarity
+- Color scheme: 5-level gradient (Grey: 0 tasks, Light Green: 1-2, Medium Green: 3-4, Dark Green: 5-6, Darkest Green: 7+)
+- Tooltips: Shows completion count and date on hover/tap
+- Data source: Fetches completed task logs from TaskLogRepository, groups by date
+- HeatmapVisibilityNotifier: StateNotifier<AsyncValue<bool>> managing visibility setting
+- Settings persistence: Uses existing settings table with key 'completion_heatmap_visible' (default: true)
+- UI integration: Heatmap conditionally rendered at top of TasksPage when visible
+- Settings toggle: _HeatmapVisibilityTile in Settings page under "Display" section
+- Real-time updates: Toggle switch updates state immediately with AsyncValue loading states
+- Empty/Error states: Handles loading, error, and empty data scenarios gracefully
+- Test coverage: Added HeatmapVisibilityNotifierTest fake and FakeSettingsDataSource for all widget tests
+- Provider overrides: All 89 tests passing with proper provider mocking to prevent database access
+- Clean architecture: Widget → Provider (StateNotifier) → Repository → Data source
+- Zero flutter analyze issues
+- Riverpod providers: heatmapVisibilityProvider
+- UI flow: TasksPage → Heatmap (conditional), Settings → Display → Heatmap Visibility toggle
 
-**Completed:** ⬜
+**Completed:** ✅
 
 ---
 
