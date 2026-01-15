@@ -7,6 +7,9 @@
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     
+    <!-- Alarm permissions -->
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM"/>
+    
     <application
         android:label="task_management_app"
         android:name="${applicationName}"

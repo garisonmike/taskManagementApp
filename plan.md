@@ -308,7 +308,7 @@
 ## EPIC 4: Alarms
 
 ### Issue 4.1 — Native Android Alarm Integration
-**Status:** ⬜ Not Started
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
 - Uses Android system alarm clock
@@ -316,9 +316,22 @@
 - User sets alarms manually only
 
 **Completion Notes**
-- 
+- Implemented AlarmService using platform channels (MethodChannel) for Android integration
+- Uses Android AlarmClock intents: ACTION_SET_ALARM and ACTION_SHOW_ALARMS
+- Complete native Android implementation in MainActivity.kt with proper intent handling
+- UI integration in Settings page with "Set Alarm" tile under Alarms section
+- Two options provided: "Set New Alarm" (with time picker and optional label) and "Open Alarms" (view all system alarms)
+- Permission added: com.android.alarm.permission.SET_ALARM in AndroidManifest.xml
+- Alarms are created in Android's native clock app, ensuring persistence after app uninstall
+- User manually confirms alarm creation in system clock app (EXTRA_SKIP_UI = false)
+- Clean Riverpod architecture with alarmServiceProvider
+- All 73 tests passing (1 new service structure test)
+- Zero flutter analyze issues
+- Successful Android APK build with alarm integration
+- Clean separation: AlarmService in services layer, provider in presentation layer
+- No data persistence needed as alarms are managed by Android system
 
-**Completed:** ⬜
+**Completed:** ✅
 
 ---
 

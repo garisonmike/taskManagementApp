@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../domain/entities/task_entity.dart';
+import '../providers/alarm_provider.dart';
 import '../providers/inactivity_reminder_provider.dart';
 import '../providers/task_provider.dart';
 import '../providers/theme_provider.dart';
@@ -622,6 +623,19 @@ class SettingsPage extends ConsumerWidget {
           const Padding(
             padding: EdgeInsets.all(16.0),
             child: Text(
+              'Alarms',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+          _AlarmsTile(),
+          const Divider(),
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
               'Data',
               style: TextStyle(
                 fontSize: 14,
@@ -743,6 +757,152 @@ class _InactivityReminderTile extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Inactivity reminder set for $timeString')),
         );
+      }
+    }
+  }
+}
+
+/// Alarms tile for setting native Android alarms
+class _AlarmsTile extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ListTile(
+      leading: const Icon(Icons.alarm),
+      title: const Text('Set Alarm'),
+      subtitle: const Text('Open Android system alarm clock'),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => _showAlarmDialog(context, ref),
+    );
+  }
+
+  Future<void> _showAlarmDialog(BuildContext context, WidgetRef ref) async {
+    final alarmService = ref.read(alarmServiceProvider);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Set Alarm'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Choose how to set your alarm:',
+              style: TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.alarm_add),
+              title: const Text('Set New Alarm'),
+              subtitle: const Text('Create alarm with specific time'),
+              onTap: () {
+                Navigator.of(dialogContext).pop();
+                _showTimePickerForAlarm(context, ref, alarmService);
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.alarm_outlined),
+              title: const Text('Open Alarms'),
+              subtitle: const Text('View all system alarms'),
+              onTap: () async {
+                Navigator.of(dialogContext).pop();
+                final success = await alarmService.openAlarms();
+                if (context.mounted) {
+                  if (!success) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Failed to open alarms app'),
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showTimePickerForAlarm(
+    BuildContext context,
+    WidgetRef ref,
+    dynamic alarmService,
+  ) async {
+    final now = TimeOfDay.now();
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: now,
+    );
+
+    if (picked != null && context.mounted) {
+      // Show optional message dialog
+      final messageController = TextEditingController();
+      final bool? setMessage = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext dialogContext) => AlertDialog(
+          title: const Text('Alarm Label'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Add an optional label for your alarm:'),
+              const SizedBox(height: 16),
+              TextField(
+                controller: messageController,
+                decoration: const InputDecoration(
+                  labelText: 'Alarm label (optional)',
+                  hintText: 'Wake up',
+                  border: OutlineInputBorder(),
+                ),
+                maxLength: 50,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Skip'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Set Alarm'),
+            ),
+          ],
+        ),
+      );
+
+      if (setMessage != null && context.mounted) {
+        final message = messageController.text.trim().isEmpty
+            ? null
+            : messageController.text.trim();
+
+        final success = await alarmService.setAlarm(
+          hour: picked.hour,
+          minute: picked.minute,
+          message: message,
+        );
+
+        if (context.mounted) {
+          if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Opening system alarm clock at ${picked.format(context)}',
+                ),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Failed to set alarm')),
+            );
+          }
+        }
       }
     }
   }
