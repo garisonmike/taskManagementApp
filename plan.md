@@ -545,16 +545,27 @@
 ---
 
 ### Issue 7.2 — Weekly Meal Blueprint
-**Status:** ⬜ Not Started
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
 - Weekly timeline works
 - Daily substitutions do not alter blueprint
 
 **Completion Notes**
-- 
+- Added MealBlueprintEntity, BlueprintMealEntity, MealSubstitutionEntity for weekly templates and daily overrides
+- MealTimelineEntry + MealTimelineSource define weekly timeline output (blueprint vs substitution)
+- Database schema updated to v4: meal_blueprints, blueprint_meals, meal_substitutions tables with indexes
+- Data models: MealBlueprintModel, BlueprintMealModel, MealSubstitutionModel
+- Data sources: MealBlueprintLocalDataSource, BlueprintMealLocalDataSource, MealSubstitutionLocalDataSource
+- Repository: MealBlueprintRepository with cascade delete of meals and substitutions (blueprint remains source of truth)
+- MealBlueprintService builds weekly timeline for a blueprint with substitution precedence
+- Riverpod providers: mealBlueprintRepositoryProvider, mealBlueprintServiceProvider, weeklyMealTimelineProvider
+- Weekly timeline logic verified with service tests (2 new tests)
+- Substitution override verified without altering blueprint meals
+- All 91 tests passing
+- Zero flutter analyze issues
 
-**Completed:** ⬜
+**Completed:** ✅
 
 ---
 

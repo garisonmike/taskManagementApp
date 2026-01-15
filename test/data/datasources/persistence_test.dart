@@ -68,7 +68,7 @@ void main() {
       // Query version from PRAGMA
       final result = await db.rawQuery('PRAGMA user_version');
       final version = result.first['user_version'] as int;
-      expect(version, 3);
+      expect(version, 4);
     });
 
     test('All required tables are created', () async {
@@ -87,6 +87,12 @@ void main() {
       expect(tableNames.contains('blueprint_tasks'), true);
       expect(tableNames.contains('task_logs'), true);
       expect(tableNames.contains('settings'), true);
+      expect(tableNames.contains('weekly_summaries'), true);
+      expect(tableNames.contains('meals'), true);
+      expect(tableNames.contains('meal_logs'), true);
+      expect(tableNames.contains('meal_blueprints'), true);
+      expect(tableNames.contains('blueprint_meals'), true);
+      expect(tableNames.contains('meal_substitutions'), true);
     });
 
     test('Indexes are created for performance', () async {
@@ -103,6 +109,14 @@ void main() {
       expect(indexNames.contains('idx_reminders_task_id'), true);
       expect(indexNames.contains('idx_task_logs_task_id'), true);
       expect(indexNames.contains('idx_task_logs_timestamp'), true);
+      expect(indexNames.contains('idx_meals_consumed_at'), true);
+      expect(indexNames.contains('idx_meal_logs_meal_id'), true);
+      expect(indexNames.contains('idx_meal_logs_timestamp'), true);
+      expect(indexNames.contains('idx_meal_blueprints_active'), true);
+      expect(indexNames.contains('idx_blueprint_meals_blueprint_id'), true);
+      expect(indexNames.contains('idx_blueprint_meals_day'), true);
+      expect(indexNames.contains('idx_meal_substitutions_blueprint_id'), true);
+      expect(indexNames.contains('idx_meal_substitutions_date'), true);
     });
   });
 }

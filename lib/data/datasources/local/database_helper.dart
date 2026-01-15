@@ -10,7 +10,7 @@ class DatabaseHelper {
 
   // Database configuration
   static const String _databaseName = 'task_management.db';
-  static const int _databaseVersion = 3;
+  static const int _databaseVersion = 4;
 
   DatabaseHelper._internal({String? testPath}) : _testPath = testPath;
 
@@ -159,6 +159,47 @@ class DatabaseHelper {
       )
     ''');
 
+    // Meal blueprints table
+    await db.execute('''
+      CREATE TABLE meal_blueprints (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    ''');
+
+    // Blueprint meals table
+    await db.execute('''
+      CREATE TABLE blueprint_meals (
+        id TEXT PRIMARY KEY,
+        blueprint_id TEXT NOT NULL,
+        day_of_week INTEGER NOT NULL,
+        meal_type TEXT NOT NULL,
+        meal_name TEXT NOT NULL,
+        description TEXT,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (blueprint_id) REFERENCES meal_blueprints (id) ON DELETE CASCADE
+      )
+    ''');
+
+    // Meal substitutions table
+    await db.execute('''
+      CREATE TABLE meal_substitutions (
+        id TEXT PRIMARY KEY,
+        blueprint_id TEXT NOT NULL,
+        date INTEGER NOT NULL,
+        day_of_week INTEGER NOT NULL,
+        meal_type TEXT NOT NULL,
+        meal_name TEXT NOT NULL,
+        description TEXT,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (blueprint_id) REFERENCES meal_blueprints (id) ON DELETE CASCADE
+      )
+    ''');
+
     // Create indexes for better query performance
     await db.execute('CREATE INDEX idx_tasks_deadline ON tasks(deadline)');
     await db.execute('CREATE INDEX idx_tasks_created_at ON tasks(created_at)');
@@ -179,6 +220,21 @@ class DatabaseHelper {
     );
     await db.execute(
       'CREATE INDEX idx_meal_logs_timestamp ON meal_logs(timestamp)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_meal_blueprints_active ON meal_blueprints(is_active)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_blueprint_meals_blueprint_id ON blueprint_meals(blueprint_id)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_blueprint_meals_day ON blueprint_meals(day_of_week)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_meal_substitutions_blueprint_id ON meal_substitutions(blueprint_id)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_meal_substitutions_date ON meal_substitutions(date)',
     );
   }
 
@@ -239,10 +295,62 @@ class DatabaseHelper {
       );
     }
 
-    // Version 4 migrations will go here
-    // if (oldVersion < 4) {
-    //   await db.execute('CREATE TABLE new_table (...)');
-    // }
+    // Version 4: Add meal blueprint tables
+    if (oldVersion < 4) {
+      await db.execute('''
+        CREATE TABLE meal_blueprints (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT,
+          is_active INTEGER NOT NULL DEFAULT 1,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE blueprint_meals (
+          id TEXT PRIMARY KEY,
+          blueprint_id TEXT NOT NULL,
+          day_of_week INTEGER NOT NULL,
+          meal_type TEXT NOT NULL,
+          meal_name TEXT NOT NULL,
+          description TEXT,
+          created_at INTEGER NOT NULL,
+          FOREIGN KEY (blueprint_id) REFERENCES meal_blueprints (id) ON DELETE CASCADE
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE meal_substitutions (
+          id TEXT PRIMARY KEY,
+          blueprint_id TEXT NOT NULL,
+          date INTEGER NOT NULL,
+          day_of_week INTEGER NOT NULL,
+          meal_type TEXT NOT NULL,
+          meal_name TEXT NOT NULL,
+          description TEXT,
+          created_at INTEGER NOT NULL,
+          FOREIGN KEY (blueprint_id) REFERENCES meal_blueprints (id) ON DELETE CASCADE
+        )
+      ''');
+
+      await db.execute(
+        'CREATE INDEX idx_meal_blueprints_active ON meal_blueprints(is_active)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_blueprint_meals_blueprint_id ON blueprint_meals(blueprint_id)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_blueprint_meals_day ON blueprint_meals(day_of_week)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_meal_substitutions_blueprint_id ON meal_substitutions(blueprint_id)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_meal_substitutions_date ON meal_substitutions(date)',
+      );
+    }
   }
 
   /// Close database connection
