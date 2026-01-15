@@ -613,6 +613,17 @@ class BlueprintsPage extends ConsumerWidget {
                         ),
                   trailing: PopupMenuButton(
                     itemBuilder: (context) => [
+                      if (blueprint.isActive)
+                        const PopupMenuItem(
+                          value: 'generate',
+                          child: Row(
+                            children: [
+                              Icon(Icons.play_arrow, color: Colors.green),
+                              SizedBox(width: 8),
+                              Text('Generate Tasks'),
+                            ],
+                          ),
+                        ),
                       const PopupMenuItem(
                         value: 'edit',
                         child: Row(
@@ -635,7 +646,13 @@ class BlueprintsPage extends ConsumerWidget {
                       ),
                     ],
                     onSelected: (value) async {
-                      if (value == 'edit') {
+                      if (value == 'generate') {
+                        await _generateTasksFromBlueprint(
+                          context,
+                          ref,
+                          blueprint.id,
+                        );
+                      } else if (value == 'edit') {
                         await Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -679,6 +696,149 @@ class BlueprintsPage extends ConsumerWidget {
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  Future<void> _generateTasksFromBlueprint(
+    BuildContext context,
+    WidgetRef ref,
+    String blueprintId,
+  ) async {
+    try {
+      final blueprintRepo = ref.read(blueprintRepositoryProvider);
+      final taskRepo = ref.read(taskRepositoryProvider);
+
+      // Get blueprint and its tasks
+      final blueprint = await blueprintRepo.getBlueprintById(blueprintId);
+      if (blueprint == null) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Blueprint not found')));
+        }
+        return;
+      }
+
+      final blueprintTasks = await blueprintRepo.getTasksByBlueprintId(
+        blueprintId,
+      );
+
+      if (blueprintTasks.isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Blueprint has no tasks to generate')),
+          );
+        }
+        return;
+      }
+
+      if (!context.mounted) return;
+
+      // Show confirmation dialog
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Generate Tasks'),
+          content: Text(
+            'Generate ${blueprintTasks.length} task(s) from "${blueprint.name}"?\n\n'
+            'Generated tasks can be modified or deleted independently.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Generate'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true || !context.mounted) return;
+
+      final now = DateTime.now();
+      int generatedCount = 0;
+
+      // Generate tasks from blueprint
+      for (final blueprintTask in blueprintTasks) {
+        final taskType = _parseTaskType(blueprintTask.taskType);
+
+        DateTime? deadline;
+        DateTime? timeBasedStart;
+        DateTime? timeBasedEnd;
+
+        // Set times based on task type and default time
+        if (blueprintTask.defaultTime != null) {
+          final timeParts = blueprintTask.defaultTime!.split(':');
+          final hour = int.parse(timeParts[0]);
+          final minute = int.parse(timeParts[1]);
+
+          if (taskType == TaskType.deadline) {
+            deadline = DateTime(now.year, now.month, now.day, hour, minute);
+          } else if (taskType == TaskType.timeBased) {
+            timeBasedStart = DateTime(
+              now.year,
+              now.month,
+              now.day,
+              hour,
+              minute,
+            );
+            // Default 1 hour duration
+            timeBasedEnd = timeBasedStart.add(const Duration(hours: 1));
+          }
+        }
+
+        final task = TaskEntity(
+          id: '${DateTime.now().millisecondsSinceEpoch}_$generatedCount',
+          title: blueprintTask.title,
+          description: blueprintTask.description,
+          taskType: taskType,
+          deadline: deadline,
+          timeBasedStart: timeBasedStart,
+          timeBasedEnd: timeBasedEnd,
+          createdAt: now,
+          updatedAt: now,
+        );
+
+        await taskRepo.createTask(task);
+        generatedCount++;
+      }
+
+      // Refresh task list
+      ref.invalidate(taskNotifierProvider);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Generated $generatedCount task(s) from blueprint'),
+            action: SnackBarAction(
+              label: 'View',
+              onPressed: () {
+                ref.read(navigationIndexProvider.notifier).state = 0;
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error generating tasks: $e')));
+      }
+    }
+  }
+
+  TaskType _parseTaskType(String taskType) {
+    switch (taskType) {
+      case 'deadline':
+        return TaskType.deadline;
+      case 'timeBased':
+        return TaskType.timeBased;
+      default:
+        return TaskType.unsure;
+    }
   }
 
   void _showDeleteConfirmation(
