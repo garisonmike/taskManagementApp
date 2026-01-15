@@ -513,16 +513,34 @@
 ## EPIC 7: Meals & Fitness (Separate Domain)
 
 ### Issue 7.1 — Meals Module Separation
-**Status:** ⬜ Not Started
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
 - Meals fully decoupled from tasks
 - Optional inclusion in logs
 
 **Completion Notes**
-- 
+- Created MealEntity domain entity: Completely independent from TaskEntity with id, name, description, mealType, consumedAt timestamps
+- MealType enum: breakfast, lunch, dinner, snack with display names
+- Database schema updated to v3: Added meals table (id, name, description, meal_type, consumed_at, created_at, updated_at)
+- MealModel data model: Converts between entity and database representation
+- MealLocalDataSource: CRUD operations for meals (create, read, update, delete, query by date range)
+- MealRepository: Business logic layer for meal operations
+- Riverpod providers: mealLocalDataSourceProvider, mealRepositoryProvider, mealsProvider, mealsByDateRangeProvider
+- Optional meal logging: Created separate MealLogEntity (independent from TaskLogEntity)
+- MealLogAction enum: consumed, edited, deleted
+- Database schema v3: Added meal_logs table (id, meal_id, action, timestamp, metadata)
+- MealLogModel, MealLogLocalDataSource, MealLogRepository: Complete logging infrastructure
+- Meal log providers: mealLogRepositoryProvider, mealLogsProvider, mealLogsByDateRangeProvider
+- Append-only logs: MealLogLocalDataSource only has createLog method (no updates)
+- Complete decoupling: Meals and tasks are fully independent modules
+- Database indexes: Added idx_meals_consumed_at, idx_meal_logs_meal_id, idx_meal_logs_timestamp
+- Database migration: v2 → v3 creates both meals and meal_logs tables
+- All 89 tests passing
+- Zero flutter analyze issues
+- Clean architecture: Domain entities → Data models → Data sources → Repositories → Providers
 
-**Completed:** ⬜
+**Completed:** ✅
 
 ---
 

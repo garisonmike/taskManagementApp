@@ -10,7 +10,7 @@ class DatabaseHelper {
 
   // Database configuration
   static const String _databaseName = 'task_management.db';
-  static const int _databaseVersion = 2;
+  static const int _databaseVersion = 3;
 
   DatabaseHelper._internal({String? testPath}) : _testPath = testPath;
 
@@ -135,6 +135,30 @@ class DatabaseHelper {
       )
     ''');
 
+    // Meals table
+    await db.execute('''
+      CREATE TABLE meals (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        meal_type TEXT NOT NULL,
+        consumed_at INTEGER NOT NULL,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    ''');
+
+    // Meal logs table (immutable, optional inclusion in unified logs)
+    await db.execute('''
+      CREATE TABLE meal_logs (
+        id TEXT PRIMARY KEY,
+        meal_id TEXT NOT NULL,
+        action TEXT NOT NULL,
+        timestamp INTEGER NOT NULL,
+        metadata TEXT
+      )
+    ''');
+
     // Create indexes for better query performance
     await db.execute('CREATE INDEX idx_tasks_deadline ON tasks(deadline)');
     await db.execute('CREATE INDEX idx_tasks_created_at ON tasks(created_at)');
@@ -146,6 +170,15 @@ class DatabaseHelper {
     );
     await db.execute(
       'CREATE INDEX idx_task_logs_timestamp ON task_logs(timestamp)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_meals_consumed_at ON meals(consumed_at)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_meal_logs_meal_id ON meal_logs(meal_id)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_meal_logs_timestamp ON meal_logs(timestamp)',
     );
   }
 
@@ -170,8 +203,44 @@ class DatabaseHelper {
       ''');
     }
 
-    // Version 3 migrations will go here
-    // if (oldVersion < 3) {
+    // Version 3: Add meals table
+    if (oldVersion < 3) {
+      await db.execute('''
+        CREATE TABLE meals (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT,
+          meal_type TEXT NOT NULL,
+          consumed_at INTEGER NOT NULL,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL
+        )
+      ''');
+
+      await db.execute(
+        'CREATE INDEX idx_meals_consumed_at ON meals(consumed_at)',
+      );
+
+      await db.execute('''
+        CREATE TABLE meal_logs (
+          id TEXT PRIMARY KEY,
+          meal_id TEXT NOT NULL,
+          action TEXT NOT NULL,
+          timestamp INTEGER NOT NULL,
+          metadata TEXT
+        )
+      ''');
+
+      await db.execute(
+        'CREATE INDEX idx_meal_logs_meal_id ON meal_logs(meal_id)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_meal_logs_timestamp ON meal_logs(timestamp)',
+      );
+    }
+
+    // Version 4 migrations will go here
+    // if (oldVersion < 4) {
     //   await db.execute('CREATE TABLE new_table (...)');
     // }
   }
