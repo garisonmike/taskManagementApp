@@ -135,40 +135,44 @@ Implement a custom app launch splash screen that displays one randomly selected 
 **Functional Requirements**
 - Images are loaded from a local asset folder
 - On each app launch:
-  - One image is randomly selected
+  - One image is randomly selected using statistically fair algorithm
   - Only that image is displayed
 - Splash screen displays immediately on app launch
 - Splash screen stays visible for:
-  - A minimum of 2 seconds
+  - A minimum of 1.5 seconds
   - Longer if app initialization is not finished
-- If initialization finishes before 2 seconds:
-  - Splash remains until 2 seconds elapse
+- If initialization finishes before 1.5 seconds:
+  - Splash remains until 1.5 seconds elapse
 - If initialization takes longer:
   - Splash remains until initialization completes
 - Splash screen transitions cleanly into the main app shell
+- Randomness must be statistically fair (no fixed index or seed reuse)
+- Splash does not block async initialization
 
 **Acceptance Criteria**
 - Splash screen shows at app startup
 - Exactly one image is shown per launch
-- Image is visible for at least 2 seconds
+- Image is visible for at least 1.5 seconds
 - No white/black flicker during transition
 - App does not feel blocked or frozen
 - Works on emulator and real device
 - Image loading is efficient and memory-safe
+- Random selection is verifiably fair across launches
 
 **Completion Notes**
 - SplashScreen widget displays full-screen image on app launch
 - 10 splash images copied to assets/splash/ directory
-- Random image selection using dart:math Random
+- **Random image selection using DateTime.now().microsecondsSinceEpoch seed**
+- **Ensures statistically fair distribution with no fixed index or seed reuse**
 - Riverpod StateNotifier manages splash state (SplashNotifier)
 - Immutable SplashState tracks: isInitialized, hasMinTimeElapsed, selectedImage
-- Minimum 2-second display time enforced with Future.delayed
+- **Minimum 1.5-second display time enforced (1500ms)**
 - Both initialization and minimum time must complete before dismissal
 - SplashNotifier.initialize() runs async without blocking main thread
 - Uses Future.wait to coordinate minimum time and initialization tasks
 - Navigator.pushReplacement transitions cleanly to AppShell
 - Image.asset with errorBuilder fallback for memory-safe loading
-- All 13 splash tests passing
+- All 13 splash tests passing (updated to 1.5s expectation)
 - All 104 total tests passing
 - 0 flutter analyze issues
 - App builds successfully

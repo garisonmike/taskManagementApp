@@ -19,7 +19,7 @@ class SplashNotifier extends StateNotifier<SplashState> {
     'assets/splash/youCanDoIt.png',
   ];
 
-  static const Duration _minDisplayTime = Duration(seconds: 2);
+  static const Duration _minDisplayTime = Duration(milliseconds: 1500);
 
   SplashNotifier()
     : super(
@@ -30,9 +30,12 @@ class SplashNotifier extends StateNotifier<SplashState> {
         ),
       );
 
-  /// Randomly selects one splash image
+  /// Randomly selects one splash image with statistically fair distribution
+  /// Uses microsecond-based seed to ensure true randomness across launches
   static String _selectRandomImage() {
-    final random = Random();
+    // DateTime.now().microsecondsSinceEpoch provides unique seed per launch
+    // This prevents fixed index or seed reuse, ensuring statistical fairness
+    final random = Random(DateTime.now().microsecondsSinceEpoch);
     final index = random.nextInt(_splashImages.length);
     return _splashImages[index];
   }

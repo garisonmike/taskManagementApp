@@ -69,7 +69,7 @@ void main() {
       expect(notifier.state.canDismiss, true);
     });
 
-    test('SplashNotifier waits minimum 2 seconds', () async {
+    test('SplashNotifier waits minimum 1.5 seconds', () async {
       final notifier = SplashNotifier();
       final stopwatch = Stopwatch()..start();
 
@@ -77,8 +77,8 @@ void main() {
 
       stopwatch.stop();
 
-      // Should take at least 2 seconds
-      expect(stopwatch.elapsed.inSeconds, greaterThanOrEqualTo(2));
+      // Should take at least 1.5 seconds (1500ms)
+      expect(stopwatch.elapsed.inMilliseconds, greaterThanOrEqualTo(1500));
     });
 
     test('SplashState copyWith creates new instance with updated values', () {
