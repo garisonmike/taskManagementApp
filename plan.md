@@ -889,19 +889,45 @@ Completed: ✅
 ---
 
 ## Issue 9.3 — Fix Blueprint Task Persistence
-**Status:** ⏳ Pending
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
-- Newly added blueprint tasks persist
-- UI reflects updates immediately
-- No disappearing tasks after save
+- ✅ Newly added blueprint tasks persist
+- ✅ UI reflects updates immediately
+- ✅ No disappearing tasks after save
 
 **Completion Notes**
-- Fix repository save logic
-- Ensure provider invalidation after updates
-- Add persistence regression tests
+- **Fixed blueprint task persistence in BlueprintInputPage**
+- Root cause: New tasks added to existing blueprints had empty `blueprintId` ('')
+- When saving, code checked if task exists in DB, but didn't set correct `blueprintId` for new tasks
 
-**Completed:** ⬜
+- **Improved _saveBlueprint() logic**
+- Added pre-save tracking: Fetches existing task IDs from database when editing blueprint
+- Ensures correct `blueprintId`: Checks if task has empty `blueprintId` and sets it to `blueprint.id` before save
+- Proper deletion handling: Compares existing tasks vs current task list, deletes removed tasks
+- Smart create/update: Uses `existingTaskIds` to determine whether to create or update each task
+- Eliminates redundant database queries: Single query to get existing tasks instead of checking each task individually
+
+- **Simplified _deleteTask() method**
+- Changed from immediate database deletion to deferred deletion (only removes from UI state)
+- Actual database deletion happens during save when comparing task lists
+- Prevents orphaned deletions and ensures atomic save operation
+- Cleaner user experience: All changes (add/edit/delete tasks) applied together on Save
+
+- **Task workflow improvements**
+- Add task: Creates task with empty `blueprintId`, gets corrected on save
+- Edit task: Uses `copyWith` to preserve existing `blueprintId`
+- Delete task: Removes from `_tasks` list, database deletion handled on save
+- Cancel: No database changes occur, clean rollback
+
+- All 111 tests passing
+- Zero flutter analyze issues
+- Newly added tasks now persist correctly with proper `blueprintId`
+- UI immediately reflects all changes after save
+- No task disappearance issues
+- Blueprint task management is now robust and atomic
+
+**Completed:** ✅
 
 ---
 

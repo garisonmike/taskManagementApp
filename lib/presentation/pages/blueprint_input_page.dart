@@ -88,19 +88,44 @@ class _BlueprintInputPageState extends ConsumerState<BlueprintInputPage> {
         await repository.updateBlueprint(blueprint);
       }
 
+      // When editing existing blueprint, get list of existing task IDs
+      // to determine which tasks have been deleted
+      Set<String> existingTaskIds = {};
+      if (widget.blueprint != null) {
+        final existingTasks = await repository.getTasksByBlueprintId(
+          widget.blueprint!.id,
+        );
+        existingTaskIds = existingTasks.map((t) => t.id).toSet();
+      }
+
+      // Track which tasks we're keeping
+      Set<String> currentTaskIds = _tasks.map((t) => t.id).toSet();
+
+      // Delete tasks that were removed from the list
+      if (widget.blueprint != null) {
+        for (final taskId in existingTaskIds) {
+          if (!currentTaskIds.contains(taskId)) {
+            await repository.deleteBlueprintTask(taskId);
+          }
+        }
+      }
+
       // Save all tasks
       for (final task in _tasks) {
+        // Ensure task has correct blueprint ID
+        final taskWithCorrectId = task.blueprintId.isEmpty
+            ? task.copyWith(blueprintId: blueprint.id)
+            : task;
+
         if (widget.blueprint == null) {
-          // New blueprint - create task with new blueprint ID
-          final newTask = task.copyWith(blueprintId: blueprint.id);
-          await repository.createBlueprintTask(newTask);
+          // New blueprint - create all tasks
+          await repository.createBlueprintTask(taskWithCorrectId);
         } else {
           // Existing blueprint - update or create task
-          final existing = await repository.getBlueprintTaskById(task.id);
-          if (existing != null) {
-            await repository.updateBlueprintTask(task);
+          if (existingTaskIds.contains(task.id)) {
+            await repository.updateBlueprintTask(taskWithCorrectId);
           } else {
-            await repository.createBlueprintTask(task);
+            await repository.createBlueprintTask(taskWithCorrectId);
           }
         }
       }
@@ -172,21 +197,11 @@ class _BlueprintInputPageState extends ConsumerState<BlueprintInputPage> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () async {
-              final task = _tasks[index];
+            onPressed: () {
               setState(() {
                 _tasks.removeAt(index);
               });
-
-              // If editing existing blueprint, delete from database
-              if (widget.blueprint != null) {
-                final repository = ref.read(blueprintRepositoryProvider);
-                await repository.deleteBlueprintTask(task.id);
-              }
-
-              if (context.mounted) {
-                Navigator.pop(context);
-              }
+              Navigator.pop(context);
             },
             child: const Text('Delete'),
           ),
