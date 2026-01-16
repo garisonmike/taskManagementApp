@@ -68,7 +68,7 @@ void main() {
       // Query version from PRAGMA
       final result = await db.rawQuery('PRAGMA user_version');
       final version = result.first['user_version'] as int;
-      expect(version, 7);
+      expect(version, 8);
     });
 
     test('All required tables are created', () async {

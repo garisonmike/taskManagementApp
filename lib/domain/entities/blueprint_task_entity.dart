@@ -10,6 +10,7 @@ class BlueprintTaskEntity {
   final String? description;
   final String taskType; // 'unsure', 'deadline', 'timeBased'
   final String? defaultTime; // HH:mm format for default time
+  final int? weekday; // 1-7 for Monday-Sunday, null for any day
   final DateTime createdAt;
 
   const BlueprintTaskEntity({
@@ -19,6 +20,7 @@ class BlueprintTaskEntity {
     this.description,
     required this.taskType,
     this.defaultTime,
+    this.weekday,
     required this.createdAt,
   });
 
@@ -30,6 +32,7 @@ class BlueprintTaskEntity {
     String? description,
     String? taskType,
     String? defaultTime,
+    int? weekday,
     DateTime? createdAt,
   }) {
     return BlueprintTaskEntity(
@@ -39,6 +42,7 @@ class BlueprintTaskEntity {
       description: description ?? this.description,
       taskType: taskType ?? this.taskType,
       defaultTime: defaultTime ?? this.defaultTime,
+      weekday: weekday ?? this.weekday,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -51,8 +55,7 @@ class BlueprintTaskEntity {
         other.blueprintId == blueprintId &&
         other.title == title &&
         other.description == description &&
-        other.taskType == taskType &&
-        other.defaultTime == defaultTime &&
+        other.weekday == weekday &&
         other.createdAt == createdAt;
   }
 
@@ -62,6 +65,9 @@ class BlueprintTaskEntity {
     blueprintId,
     title,
     description,
+    taskType,
+    defaultTime,
+    weekday,
     taskType,
     defaultTime,
     createdAt,

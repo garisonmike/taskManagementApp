@@ -307,9 +307,21 @@ class _BlueprintInputPageState extends ConsumerState<BlueprintInputPage> {
                   child: ListTile(
                     leading: Icon(_getTaskTypeIcon(task.taskType)),
                     title: Text(task.title),
-                    subtitle: task.description != null
-                        ? Text(task.description!)
-                        : null,
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (task.description != null) Text(task.description!),
+                        if (task.weekday != null)
+                          Text(
+                            _getWeekdayName(task.weekday!),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.blue,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                      ],
+                    ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -347,6 +359,27 @@ class _BlueprintInputPageState extends ConsumerState<BlueprintInputPage> {
         return Icons.help_outline;
     }
   }
+
+  String _getWeekdayName(int weekday) {
+    switch (weekday) {
+      case 1:
+        return 'Monday';
+      case 2:
+        return 'Tuesday';
+      case 3:
+        return 'Wednesday';
+      case 4:
+        return 'Thursday';
+      case 5:
+        return 'Friday';
+      case 6:
+        return 'Saturday';
+      case 7:
+        return 'Sunday';
+      default:
+        return 'Unknown';
+    }
+  }
 }
 
 /// Dialog for adding/editing a blueprint task
@@ -366,6 +399,7 @@ class _TaskDialogState extends State<_TaskDialog> {
   late TextEditingController _descriptionController;
   late String _taskType;
   TimeOfDay? _defaultTime;
+  int? _weekday;
 
   @override
   void initState() {
@@ -375,6 +409,7 @@ class _TaskDialogState extends State<_TaskDialog> {
       text: widget.task?.description ?? '',
     );
     _taskType = widget.task?.taskType ?? 'unsure';
+    _weekday = widget.task?.weekday;
     if (widget.task?.defaultTime != null) {
       final parts = widget.task!.defaultTime!.split(':');
       _defaultTime = TimeOfDay(
@@ -415,6 +450,7 @@ class _TaskDialogState extends State<_TaskDialog> {
               ? '${_defaultTime!.hour.toString().padLeft(2, '0')}:'
                     '${_defaultTime!.minute.toString().padLeft(2, '0')}'
               : null,
+          weekday: _weekday,
         ) ??
         BlueprintTaskEntity(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -428,6 +464,7 @@ class _TaskDialogState extends State<_TaskDialog> {
               ? '${_defaultTime!.hour.toString().padLeft(2, '0')}:'
                     '${_defaultTime!.minute.toString().padLeft(2, '0')}'
               : null,
+          weekday: _weekday,
           createdAt: DateTime.now(),
         );
 
@@ -484,6 +521,28 @@ class _TaskDialogState extends State<_TaskDialog> {
                 ],
                 onChanged: (value) {
                   setState(() => _taskType = value!);
+                },
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<int?>(
+                initialValue: _weekday,
+                decoration: const InputDecoration(
+                  labelText: 'Weekday',
+                  border: OutlineInputBorder(),
+                  helperText: 'Select specific day or Any Day for all days',
+                ),
+                items: const [
+                  DropdownMenuItem(value: null, child: Text('Any Day')),
+                  DropdownMenuItem(value: 1, child: Text('Monday')),
+                  DropdownMenuItem(value: 2, child: Text('Tuesday')),
+                  DropdownMenuItem(value: 3, child: Text('Wednesday')),
+                  DropdownMenuItem(value: 4, child: Text('Thursday')),
+                  DropdownMenuItem(value: 5, child: Text('Friday')),
+                  DropdownMenuItem(value: 6, child: Text('Saturday')),
+                  DropdownMenuItem(value: 7, child: Text('Sunday')),
+                ],
+                onChanged: (value) {
+                  setState(() => _weekday = value);
                 },
               ),
               const SizedBox(height: 16),

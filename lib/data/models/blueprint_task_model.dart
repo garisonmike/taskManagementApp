@@ -8,6 +8,7 @@ class BlueprintTaskModel {
   final String? description;
   final String taskType;
   final String? defaultTime;
+  final int? weekday;
   final DateTime createdAt;
 
   const BlueprintTaskModel({
@@ -17,6 +18,7 @@ class BlueprintTaskModel {
     this.description,
     required this.taskType,
     this.defaultTime,
+    this.weekday,
     required this.createdAt,
   });
 
@@ -29,6 +31,7 @@ class BlueprintTaskModel {
       description: entity.description,
       taskType: entity.taskType,
       defaultTime: entity.defaultTime,
+      weekday: entity.weekday,
       createdAt: entity.createdAt,
     );
   }
@@ -42,6 +45,7 @@ class BlueprintTaskModel {
       description: description,
       taskType: taskType,
       defaultTime: defaultTime,
+      weekday: weekday,
       createdAt: createdAt,
     );
   }
@@ -55,6 +59,7 @@ class BlueprintTaskModel {
       description: map['description'] as String?,
       taskType: map['task_type'] as String,
       defaultTime: map['default_time'] as String?,
+      weekday: map['weekday'] as int?,
       createdAt: DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
     );
   }
@@ -68,6 +73,7 @@ class BlueprintTaskModel {
       'description': description,
       'task_type': taskType,
       'default_time': defaultTime,
+      'weekday': weekday,
       'created_at': createdAt.millisecondsSinceEpoch,
     };
   }

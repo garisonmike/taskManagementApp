@@ -10,7 +10,7 @@ class DatabaseHelper {
 
   // Database configuration
   static const String _databaseName = 'task_management.db';
-  static const int _databaseVersion = 7;
+  static const int _databaseVersion = 8;
 
   DatabaseHelper._internal({String? testPath}) : _testPath = testPath;
 
@@ -94,6 +94,7 @@ class DatabaseHelper {
         description TEXT,
         task_type TEXT NOT NULL,
         default_time TEXT,
+        weekday INTEGER,
         created_at INTEGER NOT NULL,
         FOREIGN KEY (blueprint_id) REFERENCES blueprints (id) ON DELETE CASCADE
       )
@@ -498,6 +499,13 @@ class DatabaseHelper {
     if (oldVersion < 7) {
       await db.execute('''
         ALTER TABLE reminders ADD COLUMN priority TEXT NOT NULL DEFAULT 'normal'
+      ''');
+    }
+
+    // Version 8: Add weekday column to blueprint_tasks table
+    if (oldVersion < 8) {
+      await db.execute('''
+        ALTER TABLE blueprint_tasks ADD COLUMN weekday INTEGER
       ''');
     }
   }

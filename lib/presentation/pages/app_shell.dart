@@ -970,6 +970,24 @@ class BlueprintsPage extends ConsumerWidget {
         return;
       }
 
+      // Filter tasks by current weekday
+      final currentWeekday = DateTime.now().weekday;
+      final filteredTasks = blueprintTasks.where((task) {
+        // null weekday means "any day"
+        return task.weekday == null || task.weekday == currentWeekday;
+      }).toList();
+
+      if (filteredTasks.isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No tasks scheduled for today in this blueprint'),
+            ),
+          );
+        }
+        return;
+      }
+
       if (!context.mounted) return;
 
       // Show confirmation dialog
@@ -978,7 +996,7 @@ class BlueprintsPage extends ConsumerWidget {
         builder: (dialogContext) => AlertDialog(
           title: const Text('Generate Tasks'),
           content: Text(
-            'Generate ${blueprintTasks.length} task(s) from "${blueprint.name}"?\n\n'
+            'Generate ${filteredTasks.length} task(s) from "${blueprint.name}"?\n\n'
             'Generated tasks can be modified or deleted independently.',
           ),
           actions: [
@@ -1004,7 +1022,7 @@ class BlueprintsPage extends ConsumerWidget {
       final existingTasks = await taskRepo.getAllTasks();
 
       // Generate tasks from blueprint
-      for (final blueprintTask in blueprintTasks) {
+      for (final blueprintTask in filteredTasks) {
         final taskType = _parseTaskType(blueprintTask.taskType);
 
         DateTime? deadline;

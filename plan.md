@@ -856,19 +856,39 @@ Completed: ✅
 ---
 
 ## Issue 9.5 — Weekly Blueprint Support
-**Status:** ⏳ Pending
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
-- Blueprints support full‑week task definitions
-- Tasks assignable per weekday
-- Editing one day does not affect others
+- ✅ Blueprints support full‑week task definitions
+- ✅ Tasks assignable per weekday
+- ✅ Editing one day does not affect others
 
 **Completion Notes**
-- Add weekday support to BlueprintTaskEntity
-- Update blueprint editor UI
-- Ensure generation respects weekdays
+- **Added weekday field to BlueprintTaskEntity (int? weekday)**
+  - 1-7 for Monday-Sunday
+  - null for "any day" (backwards compatible with existing tasks)
+  - Added to entity, model, database schema (v8 migration)
 
-**Completed:** ⬜
+- **Updated BlueprintTaskModel**
+  - Added weekday to fromMap() and toMap() methods
+  - Database column: weekday INTEGER (nullable)
+
+- **Updated blueprint editor UI in BlueprintInputPage**
+  - Added weekday dropdown selector with "Any Day" option
+  - Shows selected weekday in task list display (blue text)
+  - Weekday persists across edits independently per task
+
+- **Updated generation logic in app_shell.dart**
+  - Filters blueprint tasks by current weekday before generation
+  - Only generates tasks where weekday matches current day OR weekday is null
+  - Shows appropriate message if no tasks scheduled for today
+
+- **Database migration to version 8**
+  - ALTER TABLE blueprint_tasks ADD COLUMN weekday INTEGER
+  - Updated _onCreate to include weekday in blueprint_tasks table
+  - All tests pass (104/104)
+
+**Completed:** ✅
 
 ---
 
