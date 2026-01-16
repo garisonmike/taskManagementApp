@@ -146,6 +146,45 @@ class TaskNotifier extends StateNotifier<AsyncValue<List<TaskEntity>>> {
       return null;
     }
   }
+
+  /// Bulk delete tasks
+  Future<void> bulkDeleteTasks(List<String> taskIds) async {
+    try {
+      for (final id in taskIds) {
+        await _repository.deleteTask(id);
+        await _logAction(id, TaskLogAction.deleted);
+      }
+      if (!mounted) return;
+      await loadTasks();
+      await _updateInactivityReminder();
+    } catch (error, stackTrace) {
+      if (!mounted) return;
+      state = AsyncValue.error(error, stackTrace);
+    }
+  }
+
+  /// Bulk complete tasks
+  Future<void> bulkCompleteTasks(List<String> taskIds) async {
+    try {
+      for (final id in taskIds) {
+        final task = await _repository.getTaskById(id);
+        if (task != null && !task.isCompleted) {
+          final updated = task.copyWith(
+            isCompleted: true,
+            completionDate: DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
+          await _repository.updateTask(updated);
+          await _logAction(id, TaskLogAction.completed);
+        }
+      }
+      if (!mounted) return;
+      await loadTasks();
+    } catch (error, stackTrace) {
+      if (!mounted) return;
+      state = AsyncValue.error(error, stackTrace);
+    }
+  }
 }
 
 /// Provider for TaskNotifier

@@ -935,20 +935,54 @@ Completed: ✅
 ---
 
 ## Issue 9.1 — Fix Task Deletion & Multi‑Select Actions
-**Status:** ⏳ Pending
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
-- Single task delete works
-- Multi‑select delete works
-- Multi‑select complete works
-- Clear selection UI state
+- ✅ Single task delete works
+- ✅ Multi‑select delete works
+- ✅ Multi‑select complete works
+- ✅ Clear selection UI state
 
 **Completion Notes**
-- Selection state provider
-- Bulk action bar
-- Confirmation dialogs
+- **Created selection state management system**
+- Added `SelectionStateNotifier` and `selectionStateProvider` to track selected task IDs and selection mode
+- Selection state includes: `selectedTaskIds` (Set), `isSelectionMode` (bool), `selectedCount` (int)
+- Provides methods: `toggleSelectionMode()`, `toggleTaskSelection()`, `selectAll()`, `clearSelection()`, `exitSelectionMode()`
 
-**Completed:** ⬜
+- **Implemented bulk operations in TaskNotifier**
+- Added `bulkDeleteTasks(List<String> taskIds)` - deletes multiple tasks with logging
+- Added `bulkCompleteTasks(List<String> taskIds)` - marks multiple tasks as completed with logging
+- Both methods include proper mounted checks and error handling
+
+- **Enhanced TasksPage UI with multi-select mode**
+- Added checklist icon in app bar to toggle selection mode
+- Selection mode AppBar shows: selection count, close button, and "select all" button
+- Tasks display checkboxes when in selection mode instead of regular leading icons
+- Disabled task actions menu and completion button in selection mode
+- Task tap in selection mode toggles selection instead of opening edit page
+
+- **Created BulkActionBar widget**
+- Appears at bottom when tasks are selected (only in selection mode)
+- Two primary actions: Complete (green) and Delete (red)
+- Complete button: Confirmation dialog → marks all selected tasks as completed → exits selection mode → shows success snackbar
+- Delete button: Confirmation dialog with warning → deletes all selected tasks → exits selection mode → shows success snackbar
+- Material design with primary container background and shadow
+
+- **User experience improvements**
+- Visual feedback: Selected tasks are highlighted with ListTile's selected property
+- Clear workflows: Exiting selection mode clears all selections automatically
+- Confirmation dialogs prevent accidental bulk operations
+- Success feedback via SnackBar messages
+- Select all button for quick bulk selection
+
+- All 111 tests passing
+- Zero flutter analyze issues
+- Single task delete works (existing functionality preserved)
+- Multi-select delete works with confirmation
+- Multi-select complete works with confirmation
+- Selection state properly cleared when exiting selection mode
+
+**Completed:** ✅
 
 ---
 

@@ -8,6 +8,7 @@ import '../providers/blueprint_provider.dart';
 import '../providers/heatmap_provider.dart';
 import '../providers/inactivity_reminder_provider.dart';
 import '../providers/reminder_provider.dart';
+import '../providers/selection_state_provider.dart';
 import '../providers/task_provider.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/completion_heatmap.dart';
@@ -79,17 +80,47 @@ class TasksPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tasksAsyncValue = ref.watch(taskNotifierProvider);
     final heatmapVisibility = ref.watch(heatmapVisibilityProvider);
+    final selectionState = ref.watch(selectionStateProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tasks'),
+        title: selectionState.isSelectionMode
+            ? Text('${selectionState.selectedCount} selected')
+            : const Text('Tasks'),
+        leading: selectionState.isSelectionMode
+            ? IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () {
+                  ref.read(selectionStateProvider.notifier).exitSelectionMode();
+                },
+              )
+            : null,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              // TODO: Implement search
-            },
-          ),
+          if (selectionState.isSelectionMode)
+            IconButton(
+              icon: const Icon(Icons.select_all),
+              onPressed: () {
+                tasksAsyncValue.whenData((tasks) {
+                  final taskIds = tasks.map((t) => t.id).toList();
+                  ref.read(selectionStateProvider.notifier).selectAll(taskIds);
+                });
+              },
+            )
+          else ...[
+            IconButton(
+              icon: const Icon(Icons.checklist),
+              tooltip: 'Select tasks',
+              onPressed: () {
+                ref.read(selectionStateProvider.notifier).toggleSelectionMode();
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () {
+                // TODO: Implement search
+              },
+            ),
+          ],
         ],
       ),
       body: tasksAsyncValue.when(
@@ -132,10 +163,23 @@ class TasksPage extends ConsumerWidget {
                   itemCount: tasks.length,
                   itemBuilder: (context, index) {
                     final task = tasks[index];
-                    return TaskListTile(task: task);
+                    return TaskListTile(
+                      task: task,
+                      isSelectionMode: selectionState.isSelectionMode,
+                      isSelected: selectionState.isSelected(task.id),
+                      onSelectionChanged: () {
+                        ref
+                            .read(selectionStateProvider.notifier)
+                            .toggleTaskSelection(task.id);
+                      },
+                    );
                   },
                 ),
               ),
+              // Bulk action bar
+              if (selectionState.isSelectionMode &&
+                  selectionState.selectedCount > 0)
+                _BulkActionBar(selectedTaskIds: selectionState.selectedTaskIds),
             ],
           );
         },
@@ -196,19 +240,166 @@ class TasksPage extends ConsumerWidget {
   }
 }
 
+/// Bulk action bar for multi-select operations
+class _BulkActionBar extends ConsumerWidget {
+  final Set<String> selectedTaskIds;
+
+  const _BulkActionBar({required this.selectedTaskIds});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primaryContainer,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 4,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => _handleBulkComplete(context, ref),
+                  icon: const Icon(Icons.check_circle_outline),
+                  label: const Text('Complete'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => _handleBulkDelete(context, ref),
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Delete'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleBulkComplete(BuildContext context, WidgetRef ref) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Complete Tasks'),
+        content: Text('Mark ${selectedTaskIds.length} task(s) as completed?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Complete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && context.mounted) {
+      await ref
+          .read(taskNotifierProvider.notifier)
+          .bulkCompleteTasks(selectedTaskIds.toList());
+      ref.read(selectionStateProvider.notifier).exitSelectionMode();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${selectedTaskIds.length} task(s) completed'),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleBulkDelete(BuildContext context, WidgetRef ref) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Tasks'),
+        content: Text(
+          'Delete ${selectedTaskIds.length} task(s)? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && context.mounted) {
+      await ref
+          .read(taskNotifierProvider.notifier)
+          .bulkDeleteTasks(selectedTaskIds.toList());
+      ref.read(selectionStateProvider.notifier).exitSelectionMode();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${selectedTaskIds.length} task(s) deleted')),
+        );
+      }
+    }
+  }
+}
+
 /// Widget for displaying a single task in the list
 class TaskListTile extends ConsumerWidget {
   final TaskEntity task;
+  final bool isSelectionMode;
+  final bool isSelected;
+  final VoidCallback? onSelectionChanged;
 
-  const TaskListTile({super.key, required this.task});
+  const TaskListTile({
+    super.key,
+    required this.task,
+    this.isSelectionMode = false,
+    this.isSelected = false,
+    this.onSelectionChanged,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ListTile(
-      leading: Icon(
-        _getTaskIcon(task.taskType),
-        color: task.isCompleted ? Colors.green : null,
-      ),
+      selected: isSelected,
+      leading: isSelectionMode
+          ? Checkbox(
+              value: isSelected,
+              onChanged: (_) => onSelectionChanged?.call(),
+            )
+          : Icon(
+              _getTaskIcon(task.taskType),
+              color: task.isCompleted ? Colors.green : null,
+            ),
       title: Text(
         task.title,
         style: TextStyle(
@@ -216,48 +407,54 @@ class TaskListTile extends ConsumerWidget {
         ),
       ),
       subtitle: _buildSubtitle(),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (task.isCompleted)
-            const Icon(Icons.check_circle, color: Colors.green)
-          else
-            IconButton(
-              icon: const Icon(Icons.check_circle_outline),
-              tooltip: 'Mark as complete',
-              onPressed: () => _showCompleteTaskDialog(context, ref),
+      trailing: isSelectionMode
+          ? null
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (task.isCompleted)
+                  const Icon(Icons.check_circle, color: Colors.green)
+                else
+                  IconButton(
+                    icon: const Icon(Icons.check_circle_outline),
+                    tooltip: 'Mark as complete',
+                    onPressed: () => _showCompleteTaskDialog(context, ref),
+                  ),
+                IconButton(
+                  icon: const Icon(Icons.more_vert),
+                  tooltip: 'More actions',
+                  onPressed: () => _showTaskActionsMenu(context, ref),
+                ),
+              ],
             ),
-          IconButton(
-            icon: const Icon(Icons.more_vert),
-            tooltip: 'More actions',
-            onPressed: () => _showTaskActionsMenu(context, ref),
-          ),
-        ],
-      ),
-      onTap: () async {
-        final result = await Navigator.push<TaskInputResult>(
-          context,
-          MaterialPageRoute(
-            builder: (context) => TaskInputPage(existingTask: task),
-          ),
-        );
+      onTap: isSelectionMode
+          ? onSelectionChanged
+          : () async {
+              final result = await Navigator.push<TaskInputResult>(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TaskInputPage(existingTask: task),
+                ),
+              );
 
-        if (result != null && context.mounted) {
-          await ref.read(taskNotifierProvider.notifier).updateTask(result.task);
+              if (result != null && context.mounted) {
+                await ref
+                    .read(taskNotifierProvider.notifier)
+                    .updateTask(result.task);
 
-          // Add or update reminder if provided
-          if (result.reminder != null) {
-            final reminderRepo = ref.read(reminderRepositoryProvider);
-            await reminderRepo.addReminder(result.reminder!);
-          }
+                // Add or update reminder if provided
+                if (result.reminder != null) {
+                  final reminderRepo = ref.read(reminderRepositoryProvider);
+                  await reminderRepo.addReminder(result.reminder!);
+                }
 
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Task updated successfully')),
-            );
-          }
-        }
-      },
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Task updated successfully')),
+                  );
+                }
+              }
+            },
     );
   }
 
