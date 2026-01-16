@@ -623,13 +623,24 @@
 ---
 
 ### Issue 8.2 — Export & Import
-**Status:** ⬜ Not Started
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
 - CSV export works
 - Import restores state accurately
 
 **Completion Notes**
-- 
+- Created CsvExportService with export methods for tasks, blueprints, logs, and settings
+- CSV escaping handles commas, quotes, and newlines properly
+- Created CsvImportService with import methods to parse and restore all data types
+- CSV parsing handles quoted values and escaped quotes correctly
+- ExportImportRepository coordinates export/import operations across all data sources
+- Metadata serialization: JSON encode on export, JSON decode on import
+- Riverpod providers: csvExportServiceProvider, csvImportServiceProvider, exportImportRepositoryProvider
+- Export providers: exportTasksProvider, exportBlueprintsProvider, exportTaskLogsProvider, exportSettingsProvider
+- Clean architecture: Services → Repository → Providers
+- All 91 tests passing
+- Zero flutter analyze issues
+- CSV format preserves all data fields for accurate state restoration
 
-**Completed:** ⬜
+**Completed:** ✅
