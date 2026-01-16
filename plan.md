@@ -597,16 +597,28 @@
 ## EPIC 8: Settings, Privacy & Export
 
 ### Issue 8.1 — Settings Engine
-**Status:** ⬜ Not Started
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
 - Presets + advanced toggles
 - Changes apply instantly
 
 **Completion Notes**
-- 
+- Created AppSettingsEntity with SettingsPreset enum (simple, advanced)
+- Simple preset toggles: logsEnabled, graphsEnabled, mealsTrackingEnabled, notificationPrivacyEnabled
+- Advanced preset toggles: taskLogsEnabled, mealLogsEnabled, weeklySummariesEnabled, heatmapVisible
+- Database schema updated to v6: Added app_settings table with singleton pattern (id=1)
+- AppSettingsModel with toEntity/fromEntity conversion
+- AppSettingsLocalDataSource with initializeDefaultSettings() for first-run setup
+- AppSettingsRepository with individual toggle methods for each setting
+- AppSettingsNotifier using StateNotifier with AsyncValue for reactive updates
+- Instant updates: Each toggle reloads settings immediately via StateNotifier
+- Riverpod providers: appSettingsRepositoryProvider, appSettingsNotifierProvider, appSettingsProvider
+- All 91 tests passing
+- Zero flutter analyze issues
+- Settings persist via database and apply instantly through reactive state management
 
-**Completed:** ⬜
+**Completed:** ✅
 
 ---
 

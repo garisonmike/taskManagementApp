@@ -68,7 +68,7 @@ void main() {
       // Query version from PRAGMA
       final result = await db.rawQuery('PRAGMA user_version');
       final version = result.first['user_version'] as int;
-      expect(version, 5);
+      expect(version, 6);
     });
 
     test('All required tables are created', () async {
@@ -96,6 +96,7 @@ void main() {
       expect(tableNames.contains('foods'), true);
       expect(tableNames.contains('nutrition_columns'), true);
       expect(tableNames.contains('food_nutrition_values'), true);
+      expect(tableNames.contains('app_settings'), true);
     });
 
     test('Indexes are created for performance', () async {

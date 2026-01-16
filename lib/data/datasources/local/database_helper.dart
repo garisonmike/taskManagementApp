@@ -10,7 +10,7 @@ class DatabaseHelper {
 
   // Database configuration
   static const String _databaseName = 'task_management.db';
-  static const int _databaseVersion = 5;
+  static const int _databaseVersion = 6;
 
   DatabaseHelper._internal({String? testPath}) : _testPath = testPath;
 
@@ -242,6 +242,23 @@ class DatabaseHelper {
       )
     ''');
 
+    // App settings table - Application-wide settings
+    await db.execute('''
+      CREATE TABLE app_settings (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        preset TEXT NOT NULL,
+        logs_enabled INTEGER NOT NULL DEFAULT 1,
+        graphs_enabled INTEGER NOT NULL DEFAULT 1,
+        meals_tracking_enabled INTEGER NOT NULL DEFAULT 1,
+        notification_privacy_enabled INTEGER NOT NULL DEFAULT 0,
+        task_logs_enabled INTEGER NOT NULL DEFAULT 1,
+        meal_logs_enabled INTEGER NOT NULL DEFAULT 1,
+        weekly_summaries_enabled INTEGER NOT NULL DEFAULT 1,
+        heatmap_visible INTEGER NOT NULL DEFAULT 1,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
     // Create indexes for better query performance
     await db.execute('CREATE INDEX idx_tasks_deadline ON tasks(deadline)');
     await db.execute('CREATE INDEX idx_tasks_created_at ON tasks(created_at)');
@@ -455,6 +472,25 @@ class DatabaseHelper {
       await db.execute(
         'CREATE INDEX idx_food_nutrition_values_column_id ON food_nutrition_values(nutrition_column_id)',
       );
+    }
+
+    // Version 6: Add app_settings table
+    if (oldVersion < 6) {
+      await db.execute('''
+        CREATE TABLE app_settings (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          preset TEXT NOT NULL,
+          logs_enabled INTEGER NOT NULL DEFAULT 1,
+          graphs_enabled INTEGER NOT NULL DEFAULT 1,
+          meals_tracking_enabled INTEGER NOT NULL DEFAULT 1,
+          notification_privacy_enabled INTEGER NOT NULL DEFAULT 0,
+          task_logs_enabled INTEGER NOT NULL DEFAULT 1,
+          meal_logs_enabled INTEGER NOT NULL DEFAULT 1,
+          weekly_summaries_enabled INTEGER NOT NULL DEFAULT 1,
+          heatmap_visible INTEGER NOT NULL DEFAULT 1,
+          updated_at TEXT NOT NULL
+        )
+      ''');
     }
   }
 
