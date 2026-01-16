@@ -52,6 +52,31 @@ final remindersByDateProvider =
       return groupedReminders;
     });
 
+/// Provider for all reminders with tasks (ungrouped, for history page)
+final allRemindersWithTasksProvider = FutureProvider<List<ReminderWithTask>>((
+  ref,
+) async {
+  final reminderRepo = ref.watch(reminderRepositoryProvider);
+  final taskRepo = ref.watch(taskRepositoryProvider);
+
+  final reminders = await reminderRepo.getAllReminders();
+  final tasks = await taskRepo.getAllTasks();
+
+  // Create a map of task ID to task
+  final taskMap = {for (var task in tasks) task.id: task};
+
+  // Create list of ReminderWithTask
+  final result = <ReminderWithTask>[];
+  for (final reminder in reminders) {
+    final task = taskMap[reminder.taskId];
+    if (task != null) {
+      result.add(ReminderWithTask(reminder: reminder, task: task));
+    }
+  }
+
+  return result;
+});
+
 /// Combined reminder and task data
 class ReminderWithTask {
   final ReminderEntity reminder;

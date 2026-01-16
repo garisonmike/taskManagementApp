@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/services/reminder_scheduler.dart';
+import '../../domain/entities/reminder_entity.dart';
 import '../providers/reminder_provider.dart';
+import 'notifications_history_page.dart';
 
 /// Reminders page - View and manage reminders by day
 class RemindersPage extends ConsumerWidget {
@@ -14,7 +16,22 @@ class RemindersPage extends ConsumerWidget {
     final remindersAsyncValue = ref.watch(remindersByDateProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Reminders')),
+      appBar: AppBar(
+        title: const Text('Reminders'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history),
+            tooltip: 'Notification History',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const NotificationsHistoryPage(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       body: remindersAsyncValue.when(
         data: (remindersByDate) {
           if (remindersByDate.isEmpty) {
@@ -112,17 +129,52 @@ class _ReminderListTile extends ConsumerWidget {
     final reminder = reminderWithTask.reminder;
     final task = reminderWithTask.task;
     final timeFormat = DateFormat('h:mm a');
+    final isUrgent = reminder.priority == ReminderPriority.urgent;
 
     return ListTile(
       leading: Icon(
         reminder.isEnabled
             ? Icons.notifications_active
             : Icons.notifications_off,
-        color: reminder.isEnabled ? null : Colors.grey,
+        color: reminder.isEnabled
+            ? (isUrgent ? Colors.red : null)
+            : Colors.grey,
       ),
-      title: Text(
-        task.title,
-        style: TextStyle(color: reminder.isEnabled ? null : Colors.grey),
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(
+              task.title,
+              style: TextStyle(color: reminder.isEnabled ? null : Colors.grey),
+            ),
+          ),
+          if (isUrgent && reminder.isEnabled) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red, width: 1),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.volume_up, size: 12, color: Colors.red),
+                  SizedBox(width: 4),
+                  Text(
+                    'Urgent',
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
       ),
       subtitle: Text(
         timeFormat.format(reminder.reminderTime),
@@ -180,6 +232,27 @@ class _ReminderListTile extends ConsumerWidget {
               onTap: () async {
                 Navigator.of(context).pop();
                 await _showEditTimeDialog(context, ref);
+              },
+            ),
+            ListTile(
+              leading: Icon(
+                reminderWithTask.reminder.priority == ReminderPriority.urgent
+                    ? Icons.volume_off
+                    : Icons.volume_up,
+                color:
+                    reminderWithTask.reminder.priority ==
+                        ReminderPriority.urgent
+                    ? null
+                    : Colors.red,
+              ),
+              title: Text(
+                reminderWithTask.reminder.priority == ReminderPriority.urgent
+                    ? 'Set as Normal (Silent)'
+                    : 'Set as Urgent (Sound)',
+              ),
+              onTap: () async {
+                Navigator.of(context).pop();
+                await _togglePriority(context, ref);
               },
             ),
             ListTile(
@@ -245,6 +318,37 @@ class _ReminderListTile extends ConsumerWidget {
           );
         }
       }
+    }
+  }
+
+  Future<void> _togglePriority(BuildContext context, WidgetRef ref) async {
+    final newPriority =
+        reminderWithTask.reminder.priority == ReminderPriority.urgent
+        ? ReminderPriority.normal
+        : ReminderPriority.urgent;
+
+    final updated = reminderWithTask.reminder.copyWith(priority: newPriority);
+    await ref.read(reminderRepositoryProvider).updateReminder(updated);
+
+    // Reschedule notification with new priority
+    final scheduler = ReminderScheduler();
+    await scheduler.cancelReminder(reminderWithTask.reminder);
+    if (updated.isEnabled && updated.reminderTime.isAfter(DateTime.now())) {
+      await scheduler.scheduleReminder(
+        reminder: updated,
+        task: reminderWithTask.task,
+      );
+    }
+
+    ref.invalidate(remindersByDateProvider);
+
+    if (context.mounted) {
+      final priorityText = newPriority == ReminderPriority.urgent
+          ? 'urgent (sound)'
+          : 'normal (silent)';
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Reminder set as $priorityText')));
     }
   }
 

@@ -817,7 +817,7 @@ Completed: ✅
 ---
 
 ## Issue 9.7 — Reminders & Notifications UI Completion
-**Status:** ⏳ Pending
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
 - Reminders page fully functional
@@ -826,11 +826,51 @@ Completed: ✅
 - Silent vs sound notifications configurable
 
 **Completion Notes**
-- Add urgency flag to ReminderEntity
-- Update notification channel behavior
-- Implement notifications history page
+- **Enhanced RemindersPage with priority display**
+  - Added visual distinction for urgent reminders: red icon, "Urgent" badge with sound icon
+  - Badge uses red border, red text, and red background tint (alpha: 0.1)
+  - Normal reminders display without badge
+  - Disabled reminders shown in grey
 
-**Completed:** ⬜
+- **Added priority editing functionality**
+  - New menu option to toggle priority: "Set as Urgent (Sound)" / "Set as Normal (Silent)"
+  - Menu icon changes based on current priority (volume_up for urgent, volume_off for normal)
+  - _togglePriority method updates database and reschedules notification with new priority
+  - Feedback SnackBar confirms priority change
+
+- **Created NotificationsHistoryPage**
+  - New page showing all reminders grouped by status: Today, Upcoming, Past
+  - Each section shows count of reminders
+  - Displays full datetime with format "MMM d, y • h:mm a"
+  - Past reminders shown with history icon and grey color
+  - Urgent reminders display "Urgent" badge with sound icon
+  - Disabled reminders indicated with "Disabled" subtitle text
+  - Past reminders show check icon indicating delivery
+
+- **Added navigation to history page**
+  - History icon button added to RemindersPage AppBar
+  - Opens NotificationsHistoryPage with push navigation
+  - Tooltip: "Notification History"
+
+- **Priority system already implemented**
+  - ReminderEntity already had `priority` field with ReminderPriority enum (normal, urgent)
+  - NotificationService handles priority:
+    * Urgent = Priority.high with sound and vibration
+    * Normal = Priority.defaultPriority (silent)
+  - Database model supports priority persistence
+
+- **Added allRemindersWithTasksProvider**
+  - New Riverpod provider for ungrouped list of all reminders with tasks
+  - Used by NotificationsHistoryPage for chronological display
+  - Complements existing remindersByDateProvider (grouped by date)
+
+- All 104 tests passing
+- Zero flutter analyze issues
+- Clean Riverpod architecture: entity → model → repository → provider → UI
+- Priority changes immediately reschedule notifications with correct sound behavior
+- Complete UI for managing reminder priorities and viewing notification history
+
+**Completed:** ✅
 
 ---
 
