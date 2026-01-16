@@ -2,6 +2,8 @@
 
 An offline-first Android task management application built with Flutter.
 
+## This app is majorly vibecoded...
+
 ## Features
 
 - Offline-first architecture with local persistence

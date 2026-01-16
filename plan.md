@@ -124,57 +124,39 @@
 
 **Completed:** ✅
 
-📌 Issue 1.3 — Custom Splash Screen with Random Image
-Status: ⬜ Not Started
+---
 
-Description
+### Issue 1.3 — Custom Splash Screen with Random Image
+**Status:** ✅ Completed
+
+**Description**  
 Implement a custom app launch splash screen that displays one randomly selected image from a local folder while the app initializes.
 
-Functional Requirements
+**Functional Requirements**
+- Images are loaded from a local asset folder
+- On each app launch:
+  - One image is randomly selected
+  - Only that image is displayed
+- Splash screen displays immediately on app launch
+- Splash screen stays visible for:
+  - A minimum of 2 seconds
+  - Longer if app initialization is not finished
+- If initialization finishes before 2 seconds:
+  - Splash remains until 2 seconds elapse
+- If initialization takes longer:
+  - Splash remains until initialization completes
+- Splash screen transitions cleanly into the main app shell
 
-Images are loaded from a local asset folder
+**Acceptance Criteria**
+- Splash screen shows at app startup
+- Exactly one image is shown per launch
+- Image is visible for at least 2 seconds
+- No white/black flicker during transition
+- App does not feel blocked or frozen
+- Works on emulator and real device
+- Image loading is efficient and memory-safe
 
-On each app launch:
-
-One image is randomly selected
-
-Only that image is displayed
-
-Splash screen displays immediately on app launch
-
-Splash screen stays visible for:
-
-A minimum of 2 seconds
-
-Longer if app initialization is not finished
-
-If initialization finishes before 2 seconds:
-
-Splash remains until 2 seconds elapse
-
-If initialization takes longer:
-
-Splash remains until initialization completes
-
-Splash screen transitions cleanly into the main app shell
-
-Acceptance Criteria
-
-Splash screen shows at app startup
-
-Exactly one image is shown per launch
-
-Image is visible for at least 2 seconds
-
-No white/black flicker during transition
-
-App does not feel blocked or frozen
-
-Works on emulator and real device
-
-Image loading is efficient and memory-safe
-
-Completion Notes
+**Completion Notes**
 - SplashScreen widget displays full-screen image on app launch
 - 10 splash images copied to assets/splash/ directory
 - Random image selection using dart:math Random
