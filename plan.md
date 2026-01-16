@@ -702,231 +702,256 @@ Completed: ✅
 
 ---
 
-## EPIC 9: Stability, UI Completion & UX Corrections (v1.1.0)
-
-**Goal:** Fix critical crashes, complete missing UI surfaces, correct logic bugs, improve UX consistency, and align implementation with original specifications — without introducing new large features.
+# 📌 EPIC 9: Stability, UX Fixes & Missing Features (v1.1.0)
 
 ---
 
-### Issue 9.1 — Task Reminder UI & Logic Fixes
+## Issue 9.13 — Splash Screen Improvements
+**Status:** ⏳ Pending
+
+**Acceptance Criteria**
+- Splash screen displays a random image from the splash folder
+- Minimum display time reduced to **1.5 seconds**
+- Randomness avoids repeating the last shown image
+- Fallback image exists if loading fails
+
+**Completion Notes**
+- Improve random selection logic (shuffle + last-image exclusion)
+- Reduce enforced delay from 2.0s → 1.5s
+- Add safe fallback asset
+- Keep async initialization non-blocking
+
+**Completed:** ⬜
+
+---
+
+## Issue 9.12 — Search & Sort Fixes
+**Status:** ⏳ Pending
+
+**Acceptance Criteria**
+- Task search works correctly
+- Search filters tasks in real time
+- Sort button works consistently
+- Sorting respects current filters
+
+**Completion Notes**
+- Fix search provider logic
+- Ensure search + sort compose correctly
+- Add regression tests for filtered sorting
+
+**Completed:** ⬜
+
+---
+
+## Issue 9.11 — Heatmap UX Adjustment
+**Status:** ⏳ Pending
+
+**Acceptance Criteria**
+- Heatmap appears **below** the task list
+- Tapping heatmap opens:
+  - Disable option
+  - Info on where to re‑enable (Settings)
+- Visibility setting persists
+
+**Completion Notes**
+- Move heatmap widget placement
+- Add interaction dialog
+- Respect `heatmapVisible` setting
+
+**Completed:** ⬜
+
+---
+
+## Issue 9.10 — Export & Import Fix
+**Status:** ⏳ Pending
+
+**Acceptance Criteria**
+- Export buttons work correctly
+- Import restores full app state
+- User receives feedback on success/failure
+
+**Completion Notes**
+- Wire UI buttons to export/import services
+- Add validation and error handling
+- Show SnackBar / dialog feedback
+
+**Completed:** ⬜
+
+---
+
+## Issue 9.9 — Theme Customization UI
+**Status:** ⏳ Pending
+
+**Acceptance Criteria**
+- User can create a custom theme
+- Color selection via UI
+- Custom themes persist across restarts
+- Light / Dark / Custom coexist
+
+**Completion Notes**
+- Create CustomThemeEntity
+- Theme editor UI
+- Persist selected theme in settings
+- Live preview support
+
+**Completed:** ⬜
+
+---
+
+## Issue 9.8 — Meals & Workouts UI Exposure
+**Status:** ⏳ Pending
+
+**Acceptance Criteria**
+- Meals section visible in main navigation
+- Weekly meal timeline visible
+- Ingredient checklist works
+- Workout section visible (or placeholder)
+
+**Completion Notes**
+- Wire existing meals logic to UI
+- Add navigation entry
+- Ensure logs integrate with analytics
+
+**Completed:** ⬜
+
+---
+
+## Issue 9.7 — Reminders & Notifications UI Completion
+**Status:** ⏳ Pending
+
+**Acceptance Criteria**
+- Reminders page fully functional
+- Notifications page exists
+- Urgent vs normal reminders supported
+- Silent vs sound notifications configurable
+
+**Completion Notes**
+- Add urgency flag to ReminderEntity
+- Update notification channel behavior
+- Implement notifications history page
+
+**Completed:** ⬜
+
+---
+
+## Issue 9.6 — Task Ordering & Sorting Rules
+**Status:** ⏳ Pending
+
+**Acceptance Criteria**
+- Task order:
+  1. Time‑based
+  2. Deadline (nearest first)
+  3. Unsure
+- Incomplete → Completed → Failed
+- User can change sort order
+- Urgent tasks visually distinguished
+
+**Completion Notes**
+- Add priority enum to TaskEntity
+- Centralize sorting comparator
+- Persist user sort preference
+
+**Completed:** ⬜
+
+---
+
+## Issue 9.5 — Weekly Blueprint Support
+**Status:** ⏳ Pending
+
+**Acceptance Criteria**
+- Blueprints support full‑week task definitions
+- Tasks assignable per weekday
+- Editing one day does not affect others
+
+**Completion Notes**
+- Add weekday support to BlueprintTaskEntity
+- Update blueprint editor UI
+- Ensure generation respects weekdays
+
+**Completed:** ⬜
+
+---
+
+## Issue 9.4 — Prevent Duplicate Tasks from Blueprint Generation
+**Status:** ⏳ Pending
+
+**Acceptance Criteria**
+- Generating from blueprint multiple times does not duplicate tasks
+- Unsure tasks cannot duplicate
+- Time‑based/deadline tasks may duplicate only if time differs
+
+**Completion Notes**
+- Add deduplication rules in repository layer
+- Compare task signatures before insert
+
+**Completed:** ⬜
+
+---
+
+## Issue 9.3 — Fix Blueprint Task Persistence
+**Status:** ⏳ Pending
+
+**Acceptance Criteria**
+- Newly added blueprint tasks persist
+- UI reflects updates immediately
+- No disappearing tasks after save
+
+**Completion Notes**
+- Fix repository save logic
+- Ensure provider invalidation after updates
+- Add persistence regression tests
+
+**Completed:** ⬜
+
+---
+
+## Issue 9.2 — Fix Task Completion & Failure Crash
 **Status:** ✅ Completed
 
 **Acceptance Criteria**
-- Tasks have a clear "Set Reminder" option
-- Deadline tasks require an explicit deadline (cannot silently default)
-- Alarms appear correctly in Reminders page
-- Urgent vs normal reminders supported
-- Silent vs sound notifications supported per task/reminder
+- ✅ Completing a task does not crash
+- ✅ Failing a task does not crash
+- ✅ Failure reason optional
+- ✅ UI updates immediately
 
 **Completion Notes**
-- **Data Layer Changes:**
-  - Added ReminderPriority enum (normal, urgent) to ReminderEntity
-  - Added priority field to ReminderEntity with default ReminderPriority.normal
-  - Updated ReminderModel with String priority field ('normal'/'urgent') for database storage
-  - Added backwards-compatible migration: database version 6→7 with ALTER TABLE reminders ADD COLUMN priority TEXT DEFAULT 'normal'
-  - Updated copyWith, equality, and hashCode methods to include priority
+- **Fixed `_dependents.isEmpty` assertion crash**
+- Added `mounted` checks in TaskNotifier before all state updates
+- Protected `loadTasks()` - checks mounted before setting loading/data/error states (lines 27-37)
+- Protected `addTask()` - checks mounted before refreshing list after creation (line 46)
+- Protected `updateTask()` - checks mounted before refreshing list after update (line 84)
+- Protected `deleteTask()` - checks mounted before refreshing list after deletion (line 96)
+- Prevents state updates after StateNotifier disposal (e.g., when user navigates away during async operation)
+- All 111 tests passing
+- Zero flutter analyze issues
+- Tasks can be completed successfully without crashes
+- Tasks can be marked as failed with optional reason without crashes
+- UI updates properly after task status changes
 
-- **UI Enhancements:**
-  - Added "Set Reminder" section in TaskInputPage with collapsible UI
-  - Implemented DateTimePicker for reminder time selection
-  - Added SegmentedButton for priority selection (Normal with notifications_outlined icon, Urgent with notification_important icon)
-  - Created TaskInputResult wrapper class to return both TaskEntity and ReminderEntity? from TaskInputPage
-  - Updated all 3 TaskInputPage invocations in app_shell.dart to handle new return type and save reminders
-
-- **Validation Improvements:**
-  - Added deadline requirement validation for deadline-type tasks
-  - Prevents saving tasks with TaskType.deadline if _selectedDeadline is null
-  - Shows error SnackBar: "Deadline is required for deadline-based tasks"
-  - Eliminated silent DateTime.now() defaults
-
-- **Notification Architecture:**
-  - Created two Android notification channels:
-    * urgent_reminders: High importance, sound enabled, vibration enabled
-    * normal_reminders: Default importance, sound disabled, vibration disabled
-  - Updated NotificationService.scheduleNotification() to accept required ReminderPriority parameter
-  - Updated NotificationService.showNotification() with optional priority parameter (default: normal)
-  - Modified ReminderScheduler.scheduleReminder() to pass reminder.priority to notification service
-  - Updated InactivityReminderService to use ReminderPriority.normal
-
-- **Test Coverage:**
-  - Updated reminder_entity_test.dart: All 7 tests updated with priority parameter
-  - Added priority assertions to verify normal/urgent distinction and enum↔string conversion
-  - Updated persistence_test.dart: Database version expectation changed from 6 to 7
-  - All 104 tests passing (100% coverage maintained)
-  - Zero flutter analyze issues
+**Completed:** ✅
 
 **Completed:** ✅
 
 ---
 
-### Issue 9.2 — Task List Ordering, Deduplication & Bulk Actions
-**Status:** ⬜ Not Started
+## Issue 9.1 — Fix Task Deletion & Multi‑Select Actions
+**Status:** ⏳ Pending
 
 **Acceptance Criteria**
-- Tasks ordered correctly:
-  - Time-based
-  - Deadline-based (closest first)
-  - Unsure
-- Incomplete tasks above completed, completed above failed
-- Duplicate "unsure" tasks prevented
-- Duplicate timed/deadline tasks allowed
-- Multi-select supported (delete / complete / fail)
+- Single task delete works
+- Multi‑select delete works
+- Multi‑select complete works
+- Clear selection UI state
 
 **Completion Notes**
-- Implemented deterministic task sorting pipeline
-- Added user-selectable sort options
-- Prevented duplicate unsure tasks by title
-- Allowed duplicates when time/deadline differs
-- Added multi-select mode with contextual action bar
-- Bulk actions: delete, complete, fail
-- Fixed delete logic (single & bulk)
-- Repository + provider logic corrected
-- UI state synced properly after mutations
-- Tests added for sorting and deduplication
+- Selection state provider
+- Bulk action bar
+- Confirmation dialogs
 
 **Completed:** ⬜
 
 ---
 
-### Issue 9.3 — Blueprint System: Weekly Scope & Duplication Fixes
-**Status:** ⬜ Not Started
-
-**Acceptance Criteria**
-- Blueprints support full-week task definitions
-- Generated tasks do not duplicate on re-generation
-- Newly added blueprint tasks persist correctly
-- Sort button functions correctly in Blueprints page
-
-**Completion Notes**
-- Extended Blueprint model to support per-day definitions
-- Fixed disappearing task bug after "updated successfully"
-- Added generation guard to prevent duplicate task creation
-- Ensured blueprint generation is idempotent per day
-- Fixed blueprint sort logic
-- UI refreshed properly after blueprint edits
-- Tests added for weekly blueprint generation
-
-**Completed:** ⬜
-
----
-
-### Issue 9.4 — Crash Fix: Task Failure Assertion Error
-**Status:** ⬜ Not Started
-
-**Acceptance Criteria**
-- App does not crash when marking a task as failed
-- Flutter framework assertion _dependents.isEmpty resolved
-- Failure reasons optional and safe
-
-**Completion Notes**
-- Identified improper provider disposal / dependency retention
-- Fixed StateNotifier lifecycle misuse
-- Ensured providers are invalidated correctly after failure
-- Added mounted checks and async safety
-- Failure flow tested repeatedly without crash
-- Screenshot-reported error no longer reproducible
-
-**Completed:** ⬜
-
----
-
-### Issue 9.5 — Missing Pages & UI Completion
-**Status:** ⬜ Not Started
-
-**Acceptance Criteria**
-- Notifications page exists and is accessible
-- Meals & Workout pages visible in UI
-- Advanced settings toggle visible and functional
-- Search button in Tasks page works
-
-**Completion Notes**
-- Implemented Notifications page (read-only + management)
-- Exposed Meals & Workout pages in navigation
-- Wired Advanced Settings toggle into Settings UI
-- Implemented task search with debounced filtering
-- Navigation state preserved across tabs
-- UI matches original app structure plan
-
-**Completed:** ⬜
-
----
-
-### Issue 9.6 — Theme System Expansion & Accessibility Fixes
-**Status:** ⬜ Not Started
-
-**Acceptance Criteria**
-- Save Task button clearly visible in all themes
-- Users can create custom themes
-- Theme contrast meets usability standards
-
-**Completion Notes**
-- Fixed Save button color contrast issue
-- Added CustomThemeEntity
-- Users can define:
-  - Primary
-  - Background
-  - Accent
-  - Text colors
-- Persisted custom themes in database
-- Live preview before saving theme
-- Fallback to default themes if corrupted
-
-**Completed:** ⬜
-
----
-
-### Issue 9.7 — Heatmap UX Improvements
-**Status:** ⬜ Not Started
-
-**Acceptance Criteria**
-- Heatmap appears at bottom of Tasks page
-- Tapping heatmap offers "Hide" option
-- User informed where to re-enable it
-
-**Completion Notes**
-- Moved heatmap to bottom section
-- Added tap-to-hide dialog
-- Added Settings hint ("Enable from Settings → Analytics")
-- Heatmap visibility synced with settings
-- No layout overflow on small screens
-
-**Completed:** ⬜
-
----
-
-### Issue 9.8 — Splash Screen Improvements
-**Status:** ⬜ Not Started
-
-**Acceptance Criteria**
-- Splash duration reduced to 1.5 seconds
-- Random image selection verifiably random
-- No repeated image bias across launches
-
-**Completion Notes**
-- Reduced minimum splash duration to 1500ms
-- Improved random selection using seeded randomness
-- Avoided last-used image repetition
-- Verified randomness across multiple cold starts
-- Splash remains async-safe and non-blocking
-
-**Completed:** ⬜
-
----
-
-### Issue 9.9 — Export & Import Fixes
-**Status:** ⬜ Not Started
-
-**Acceptance Criteria**
-- Export buttons work
-- Import restores data correctly
-- User feedback on success/failure
-
-**Completion Notes**
-- Fixed broken export button wiring
-- Fixed import trigger and permission handling
-- Added success/error snackbars
-- Verified data integrity after import
-- No crashes on malformed CSV
-
-**Completed:** ⬜
-
+## 📦 Versioning
+- Previous release: **v1.0.0+1**
+- This milestone release: **v1.1.0+2**

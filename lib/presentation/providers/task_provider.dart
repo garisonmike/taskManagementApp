@@ -26,11 +26,14 @@ class TaskNotifier extends StateNotifier<AsyncValue<List<TaskEntity>>> {
 
   /// Load all tasks from repository
   Future<void> loadTasks() async {
+    if (!mounted) return;
     state = const AsyncValue.loading();
     try {
       final tasks = await _repository.getAllTasks();
+      if (!mounted) return;
       state = AsyncValue.data(tasks);
     } catch (error, stackTrace) {
+      if (!mounted) return;
       state = AsyncValue.error(error, stackTrace);
     }
   }
@@ -40,9 +43,11 @@ class TaskNotifier extends StateNotifier<AsyncValue<List<TaskEntity>>> {
     try {
       await _repository.createTask(task);
       await _logAction(task.id, TaskLogAction.created);
+      if (!mounted) return;
       await loadTasks(); // Refresh the list
       await _updateInactivityReminder();
     } catch (error, stackTrace) {
+      if (!mounted) return;
       state = AsyncValue.error(error, stackTrace);
     }
   }
@@ -76,8 +81,12 @@ class TaskNotifier extends StateNotifier<AsyncValue<List<TaskEntity>>> {
       }
 
       await _logAction(task.id, action, metadata);
+
+      // Check if still mounted before updating state
+      if (!mounted) return;
       await loadTasks(); // Refresh the list
     } catch (error, stackTrace) {
+      if (!mounted) return;
       state = AsyncValue.error(error, stackTrace);
     }
   }
@@ -87,9 +96,11 @@ class TaskNotifier extends StateNotifier<AsyncValue<List<TaskEntity>>> {
     try {
       await _repository.deleteTask(id);
       await _logAction(id, TaskLogAction.deleted);
+      if (!mounted) return;
       await loadTasks(); // Refresh the list
       await _updateInactivityReminder();
     } catch (error, stackTrace) {
+      if (!mounted) return;
       state = AsyncValue.error(error, stackTrace);
     }
   }
