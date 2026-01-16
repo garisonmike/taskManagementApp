@@ -998,6 +998,10 @@ class BlueprintsPage extends ConsumerWidget {
 
       final now = DateTime.now();
       int generatedCount = 0;
+      int skippedCount = 0;
+
+      // Get all existing tasks to check for duplicates
+      final existingTasks = await taskRepo.getAllTasks();
 
       // Generate tasks from blueprint
       for (final blueprintTask in blueprintTasks) {
@@ -1028,6 +1032,55 @@ class BlueprintsPage extends ConsumerWidget {
           }
         }
 
+        // Check for duplicate tasks
+        bool isDuplicate = false;
+        for (final existingTask in existingTasks) {
+          if (existingTask.title.toLowerCase() ==
+                  blueprintTask.title.toLowerCase() &&
+              existingTask.taskType == taskType) {
+            // For unsure tasks, title + type match means duplicate
+            if (taskType == TaskType.unsure) {
+              isDuplicate = true;
+              break;
+            }
+
+            // For deadline tasks, also check if deadline matches
+            if (taskType == TaskType.deadline &&
+                existingTask.deadline != null &&
+                deadline != null) {
+              if (existingTask.deadline!.year == deadline.year &&
+                  existingTask.deadline!.month == deadline.month &&
+                  existingTask.deadline!.day == deadline.day &&
+                  existingTask.deadline!.hour == deadline.hour &&
+                  existingTask.deadline!.minute == deadline.minute) {
+                isDuplicate = true;
+                break;
+              }
+            }
+
+            // For time-based tasks, also check if start time matches
+            if (taskType == TaskType.timeBased &&
+                existingTask.timeBasedStart != null &&
+                timeBasedStart != null) {
+              if (existingTask.timeBasedStart!.year == timeBasedStart.year &&
+                  existingTask.timeBasedStart!.month == timeBasedStart.month &&
+                  existingTask.timeBasedStart!.day == timeBasedStart.day &&
+                  existingTask.timeBasedStart!.hour == timeBasedStart.hour &&
+                  existingTask.timeBasedStart!.minute ==
+                      timeBasedStart.minute) {
+                isDuplicate = true;
+                break;
+              }
+            }
+          }
+        }
+
+        // Skip if duplicate found
+        if (isDuplicate) {
+          skippedCount++;
+          continue;
+        }
+
         final task = TaskEntity(
           id: '${DateTime.now().millisecondsSinceEpoch}_$generatedCount',
           title: blueprintTask.title,
@@ -1048,9 +1101,12 @@ class BlueprintsPage extends ConsumerWidget {
       ref.invalidate(taskNotifierProvider);
 
       if (context.mounted) {
+        final message = skippedCount > 0
+            ? 'Generated $generatedCount task(s), skipped $skippedCount duplicate(s)'
+            : 'Generated $generatedCount task(s) from blueprint';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Generated $generatedCount task(s) from blueprint'),
+            content: Text(message),
             action: SnackBarAction(
               label: 'View',
               onPressed: () {

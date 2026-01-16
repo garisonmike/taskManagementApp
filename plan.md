@@ -873,18 +873,54 @@ Completed: ✅
 ---
 
 ## Issue 9.4 — Prevent Duplicate Tasks from Blueprint Generation
-**Status:** ⏳ Pending
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
-- Generating from blueprint multiple times does not duplicate tasks
-- Unsure tasks cannot duplicate
-- Time‑based/deadline tasks may duplicate only if time differs
+- ✅ Generating from blueprint multiple times does not duplicate tasks
+- ✅ Unsure tasks cannot duplicate
+- ✅ Time‑based/deadline tasks may duplicate only if time differs
 
 **Completion Notes**
-- Add deduplication rules in repository layer
-- Compare task signatures before insert
+- **Implemented comprehensive deduplication logic in _generateTasksFromBlueprint()**
+- Added pre-generation check: Fetches all existing tasks before generating new ones
+- Smart duplicate detection based on task type:
 
-**Completed:** ⬜
+- **Unsure tasks deduplication**
+- Checks: title (case-insensitive) + task type
+- If both match an existing task, skips generation
+- Prevents multiple identical unsure tasks from accumulating
+
+- **Deadline tasks deduplication**
+- Checks: title (case-insensitive) + task type + deadline date & time
+- Only creates if deadline time differs (year, month, day, hour, minute comparison)
+- Allows same task at different deadlines (e.g., "Submit report" at 9 AM and 5 PM)
+
+- **Time-based tasks deduplication**
+- Checks: title (case-insensitive) + task type + start time
+- Only creates if start time differs (year, month, day, hour, minute comparison)
+- Allows same task at different time slots (e.g., "Gym" at 6 AM and 6 PM)
+
+- **User feedback improvements**
+- Tracks both generated and skipped counts
+- Enhanced SnackBar message: "Generated X task(s), skipped Y duplicate(s)"
+- Clear communication when duplicates are found
+- Original message shown when no duplicates: "Generated X task(s) from blueprint"
+
+- **Blueprint generation workflow**
+- User clicks "Generate Tasks" on blueprint
+- System checks all existing tasks for duplicates
+- Creates only non-duplicate tasks
+- Shows summary of generation results
+- Refreshes task list to show new tasks
+
+- All 111 tests passing
+- Zero flutter analyze issues
+- Generating from same blueprint multiple times now safely skips duplicates
+- Unsure tasks correctly blocked from duplication
+- Deadline/time-based tasks allow duplicates only when times differ
+- Clean and efficient deduplication algorithm with O(n*m) complexity where n=blueprint tasks, m=existing tasks
+
+**Completed:** ✅
 
 ---
 
