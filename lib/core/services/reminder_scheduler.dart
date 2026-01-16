@@ -28,6 +28,7 @@ class ReminderScheduler {
       title: 'Task Reminder: ${task.title}',
       body: task.description ?? 'You have a task reminder',
       scheduledTime: reminder.reminderTime,
+      priority: reminder.priority,
       payload: task.id, // Pass task ID for navigation
     );
   }

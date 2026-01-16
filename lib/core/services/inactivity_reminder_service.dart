@@ -1,6 +1,7 @@
 import '../../data/datasources/local/database_helper.dart';
 import '../../data/datasources/local/settings_local_data_source.dart';
 import '../../data/repositories/task_repository_impl.dart';
+import '../../domain/entities/reminder_entity.dart';
 import '../../domain/repositories/task_repository.dart';
 import 'notification_service.dart';
 
@@ -93,6 +94,7 @@ class InactivityReminderService {
       title: 'No tasks yet',
       body: 'Add some tasks to stay organized and productive!',
       scheduledTime: scheduledTime,
+      priority: ReminderPriority.normal,
     );
   }
 

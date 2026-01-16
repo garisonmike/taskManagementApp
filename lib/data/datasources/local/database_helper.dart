@@ -10,7 +10,7 @@ class DatabaseHelper {
 
   // Database configuration
   static const String _databaseName = 'task_management.db';
-  static const int _databaseVersion = 6;
+  static const int _databaseVersion = 7;
 
   DatabaseHelper._internal({String? testPath}) : _testPath = testPath;
 
@@ -67,6 +67,7 @@ class DatabaseHelper {
         task_id TEXT NOT NULL,
         reminder_time INTEGER NOT NULL,
         is_enabled INTEGER NOT NULL DEFAULT 1,
+        priority TEXT NOT NULL DEFAULT 'normal',
         created_at INTEGER NOT NULL,
         FOREIGN KEY (task_id) REFERENCES tasks (id) ON DELETE CASCADE
       )
@@ -490,6 +491,13 @@ class DatabaseHelper {
           heatmap_visible INTEGER NOT NULL DEFAULT 1,
           updated_at TEXT NOT NULL
         )
+      ''');
+    }
+
+    // Version 7: Add priority column to reminders table
+    if (oldVersion < 7) {
+      await db.execute('''
+        ALTER TABLE reminders ADD COLUMN priority TEXT NOT NULL DEFAULT 'normal'
       ''');
     }
   }

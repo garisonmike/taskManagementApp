@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/entities/reminder_entity.dart';
 import '../../domain/entities/task_entity.dart';
+
+/// Result data from TaskInputPage
+class TaskInputResult {
+  final TaskEntity task;
+  final ReminderEntity? reminder;
+
+  TaskInputResult({required this.task, this.reminder});
+}
 
 /// Page for adding or editing a task
 class TaskInputPage extends ConsumerStatefulWidget {
@@ -21,6 +30,11 @@ class _TaskInputPageState extends ConsumerState<TaskInputPage> {
   DateTime? _selectedDeadline;
   DateTime? _timeBasedStart;
   DateTime? _timeBasedEnd;
+
+  // Reminder state
+  bool _enableReminder = false;
+  DateTime? _reminderTime;
+  ReminderPriority _reminderPriority = ReminderPriority.normal;
 
   @override
   void initState() {
@@ -47,7 +61,23 @@ class _TaskInputPageState extends ConsumerState<TaskInputPage> {
 
   bool get _isEditing => widget.existingTask != null;
 
+  String? _validateDeadlineRequired() {
+    if (_selectedTaskType == TaskType.deadline && _selectedDeadline == null) {
+      return 'Deadline is required for deadline-based tasks';
+    }
+    return null;
+  }
+
   void _saveTask() {
+    // Validate deadline requirement
+    final deadlineError = _validateDeadlineRequired();
+    if (deadlineError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(deadlineError), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
     if (_formKey.currentState!.validate()) {
       final now = DateTime.now();
 
@@ -79,7 +109,22 @@ class _TaskInputPageState extends ConsumerState<TaskInputPage> {
         updatedAt: now,
       );
 
-      Navigator.of(context).pop(task);
+      // Create reminder if enabled
+      ReminderEntity? reminder;
+      if (_enableReminder && _reminderTime != null) {
+        reminder = ReminderEntity(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          taskId: task.id,
+          reminderTime: _reminderTime!,
+          isEnabled: true,
+          priority: _reminderPriority,
+          createdAt: now,
+        );
+      }
+
+      Navigator.of(
+        context,
+      ).pop(TaskInputResult(task: task, reminder: reminder));
     }
   }
 
@@ -165,6 +210,36 @@ class _TaskInputPageState extends ConsumerState<TaskInputPage> {
       if (time != null && mounted) {
         setState(() {
           _timeBasedEnd = DateTime(
+            date.year,
+            date.month,
+            date.day,
+            time.hour,
+            time.minute,
+          );
+        });
+      }
+    }
+  }
+
+  Future<void> _selectReminderTime() async {
+    if (!mounted) return;
+
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _reminderTime ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+    );
+
+    if (date != null && mounted) {
+      final time = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(_reminderTime ?? DateTime.now()),
+      );
+
+      if (time != null && mounted) {
+        setState(() {
+          _reminderTime = DateTime(
             date.year,
             date.month,
             date.day,
@@ -304,6 +379,80 @@ class _TaskInputPageState extends ConsumerState<TaskInputPage> {
                   borderRadius: BorderRadius.circular(8),
                   side: BorderSide(color: Colors.grey.shade300),
                 ),
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Set Reminder section
+            const Divider(height: 32),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Set Reminder',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                Switch(
+                  value: _enableReminder,
+                  onChanged: (value) {
+                    setState(() {
+                      _enableReminder = value;
+                      if (!value) {
+                        _reminderTime = null;
+                        _reminderPriority = ReminderPriority.normal;
+                      }
+                    });
+                  },
+                ),
+              ],
+            ),
+
+            if (_enableReminder) ...[
+              const SizedBox(height: 16),
+
+              // Reminder time picker
+              ListTile(
+                leading: const Icon(Icons.access_time),
+                title: const Text('Reminder Time'),
+                subtitle: Text(
+                  _reminderTime != null
+                      ? _formatDateTime(_reminderTime!)
+                      : 'Not set',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: _selectReminderTime,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: BorderSide(color: Colors.grey.shade300),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Priority selector
+              const Text(
+                'Priority',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              SegmentedButton<ReminderPriority>(
+                segments: const [
+                  ButtonSegment(
+                    value: ReminderPriority.normal,
+                    label: Text('Normal'),
+                    icon: Icon(Icons.notifications_outlined),
+                  ),
+                  ButtonSegment(
+                    value: ReminderPriority.urgent,
+                    label: Text('Urgent'),
+                    icon: Icon(Icons.notification_important),
+                  ),
+                ],
+                selected: {_reminderPriority},
+                onSelectionChanged: (Set<ReminderPriority> selected) {
+                  setState(() {
+                    _reminderPriority = selected.first;
+                  });
+                },
               ),
               const SizedBox(height: 16),
             ],

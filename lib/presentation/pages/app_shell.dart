@@ -7,6 +7,7 @@ import '../providers/alarm_provider.dart';
 import '../providers/blueprint_provider.dart';
 import '../providers/heatmap_provider.dart';
 import '../providers/inactivity_reminder_provider.dart';
+import '../providers/reminder_provider.dart';
 import '../providers/task_provider.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/completion_heatmap.dart';
@@ -168,13 +169,20 @@ class TasksPage extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          final result = await Navigator.push<TaskEntity>(
+          final result = await Navigator.push<TaskInputResult>(
             context,
             MaterialPageRoute(builder: (context) => const TaskInputPage()),
           );
 
           if (result != null && context.mounted) {
-            await ref.read(taskNotifierProvider.notifier).addTask(result);
+            await ref.read(taskNotifierProvider.notifier).addTask(result.task);
+
+            // Add reminder if provided
+            if (result.reminder != null) {
+              final reminderRepo = ref.read(reminderRepositoryProvider);
+              await reminderRepo.addReminder(result.reminder!);
+            }
+
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Task saved successfully')),
@@ -227,7 +235,7 @@ class TaskListTile extends ConsumerWidget {
         ],
       ),
       onTap: () async {
-        final result = await Navigator.push<TaskEntity>(
+        final result = await Navigator.push<TaskInputResult>(
           context,
           MaterialPageRoute(
             builder: (context) => TaskInputPage(existingTask: task),
@@ -235,7 +243,14 @@ class TaskListTile extends ConsumerWidget {
         );
 
         if (result != null && context.mounted) {
-          await ref.read(taskNotifierProvider.notifier).updateTask(result);
+          await ref.read(taskNotifierProvider.notifier).updateTask(result.task);
+
+          // Add or update reminder if provided
+          if (result.reminder != null) {
+            final reminderRepo = ref.read(reminderRepositoryProvider);
+            await reminderRepo.addReminder(result.reminder!);
+          }
+
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Task updated successfully')),
@@ -375,7 +390,7 @@ class TaskListTile extends ConsumerWidget {
               title: const Text('Edit'),
               onTap: () async {
                 Navigator.of(context).pop();
-                final result = await Navigator.push<TaskEntity>(
+                final result = await Navigator.push<TaskInputResult>(
                   context,
                   MaterialPageRoute(
                     builder: (context) => TaskInputPage(existingTask: task),
@@ -384,7 +399,14 @@ class TaskListTile extends ConsumerWidget {
                 if (result != null && context.mounted) {
                   await ref
                       .read(taskNotifierProvider.notifier)
-                      .updateTask(result);
+                      .updateTask(result.task);
+
+                  // Add or update reminder if provided
+                  if (result.reminder != null) {
+                    final reminderRepo = ref.read(reminderRepositoryProvider);
+                    await reminderRepo.addReminder(result.reminder!);
+                  }
+
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(

@@ -3,6 +3,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../domain/entities/reminder_entity.dart';
+
 /// Service for managing local notifications
 /// Handles notification scheduling, permissions, and lifecycle
 class NotificationService {
@@ -63,6 +65,7 @@ class NotificationService {
     required String title,
     required String body,
     required DateTime scheduledTime,
+    required ReminderPriority priority,
     String? payload,
   }) async {
     if (!_initialized) {
@@ -76,18 +79,28 @@ class NotificationService {
       if (!granted) return;
     }
 
-    // Create notification details
-    const androidDetails = AndroidNotificationDetails(
-      'task_reminders',
-      'Task Reminders',
-      channelDescription: 'Notifications for task reminders',
-      importance: Importance.high,
-      priority: Priority.high,
-      enableVibration: true,
-      playSound: true,
-    );
+    // Create notification details based on priority
+    final androidDetails = priority == ReminderPriority.urgent
+        ? const AndroidNotificationDetails(
+            'urgent_reminders',
+            'Urgent Reminders',
+            channelDescription: 'Urgent task reminders with sound',
+            importance: Importance.high,
+            priority: Priority.high,
+            enableVibration: true,
+            playSound: true,
+          )
+        : const AndroidNotificationDetails(
+            'normal_reminders',
+            'Normal Reminders',
+            channelDescription: 'Normal task reminders (silent)',
+            importance: Importance.defaultImportance,
+            priority: Priority.defaultPriority,
+            enableVibration: false,
+            playSound: false,
+          );
 
-    const notificationDetails = NotificationDetails(android: androidDetails);
+    final notificationDetails = NotificationDetails(android: androidDetails);
 
     // Schedule the notification
     await _notifications.zonedSchedule(
@@ -123,21 +136,30 @@ class NotificationService {
     required int id,
     required String title,
     required String body,
+    ReminderPriority priority = ReminderPriority.normal,
     String? payload,
   }) async {
     if (!_initialized) {
       await initialize();
     }
 
-    const androidDetails = AndroidNotificationDetails(
-      'task_reminders',
-      'Task Reminders',
-      channelDescription: 'Notifications for task reminders',
-      importance: Importance.high,
-      priority: Priority.high,
-    );
+    final androidDetails = priority == ReminderPriority.urgent
+        ? const AndroidNotificationDetails(
+            'urgent_reminders',
+            'Urgent Reminders',
+            channelDescription: 'Urgent task reminders with sound',
+            importance: Importance.high,
+            priority: Priority.high,
+          )
+        : const AndroidNotificationDetails(
+            'normal_reminders',
+            'Normal Reminders',
+            channelDescription: 'Normal task reminders (silent)',
+            importance: Importance.defaultImportance,
+            priority: Priority.defaultPriority,
+          );
 
-    const notificationDetails = NotificationDetails(android: androidDetails);
+    final notificationDetails = NotificationDetails(android: androidDetails);
 
     await _notifications.show(
       id,

@@ -6,6 +6,7 @@ class ReminderModel {
   final String taskId;
   final int reminderTime; // stored as epoch milliseconds
   final int isEnabled; // stored as 0 or 1 in DB
+  final String priority; // stored as 'normal' or 'urgent'
   final int createdAt; // stored as epoch milliseconds
 
   ReminderModel({
@@ -13,6 +14,7 @@ class ReminderModel {
     required this.taskId,
     required this.reminderTime,
     required this.isEnabled,
+    required this.priority,
     required this.createdAt,
   });
 
@@ -23,6 +25,9 @@ class ReminderModel {
       taskId: taskId,
       reminderTime: DateTime.fromMillisecondsSinceEpoch(reminderTime),
       isEnabled: isEnabled == 1,
+      priority: priority == 'urgent'
+          ? ReminderPriority.urgent
+          : ReminderPriority.normal,
       createdAt: DateTime.fromMillisecondsSinceEpoch(createdAt),
     );
   }
@@ -34,6 +39,9 @@ class ReminderModel {
       taskId: entity.taskId,
       reminderTime: entity.reminderTime.millisecondsSinceEpoch,
       isEnabled: entity.isEnabled ? 1 : 0,
+      priority: entity.priority == ReminderPriority.urgent
+          ? 'urgent'
+          : 'normal',
       createdAt: entity.createdAt.millisecondsSinceEpoch,
     );
   }
@@ -45,6 +53,7 @@ class ReminderModel {
       'task_id': taskId,
       'reminder_time': reminderTime,
       'is_enabled': isEnabled,
+      'priority': priority,
       'created_at': createdAt,
     };
   }
@@ -56,6 +65,9 @@ class ReminderModel {
       taskId: map['task_id'] as String,
       reminderTime: map['reminder_time'] as int,
       isEnabled: map['is_enabled'] as int,
+      priority:
+          (map['priority'] as String?) ??
+          'normal', // Default to normal for backwards compatibility
       createdAt: map['created_at'] as int,
     );
   }

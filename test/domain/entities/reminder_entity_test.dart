@@ -13,6 +13,7 @@ void main() {
         taskId: 'task-123',
         reminderTime: reminderTime,
         isEnabled: true,
+        priority: ReminderPriority.normal,
         createdAt: createdAt,
       );
 
@@ -20,6 +21,7 @@ void main() {
       expect(reminder.taskId, 'task-123');
       expect(reminder.reminderTime, reminderTime);
       expect(reminder.isEnabled, true);
+      expect(reminder.priority, ReminderPriority.normal);
       expect(reminder.createdAt, createdAt);
     });
 
@@ -29,6 +31,7 @@ void main() {
         taskId: 'task-456',
         reminderTime: DateTime.now(),
         isEnabled: true,
+        priority: ReminderPriority.urgent,
         createdAt: DateTime.now(),
       );
 
@@ -37,6 +40,7 @@ void main() {
       expect(original.isEnabled, true);
       expect(modified.isEnabled, false);
       expect(original.id, modified.id);
+      expect(modified.priority, ReminderPriority.urgent); // Priority unchanged
     });
 
     test('ReminderModel converts to/from entity correctly', () {
@@ -48,6 +52,7 @@ void main() {
         taskId: 'task-789',
         reminderTime: reminderTime,
         isEnabled: true,
+        priority: ReminderPriority.urgent,
         createdAt: createdAt,
       );
 
@@ -57,6 +62,7 @@ void main() {
       expect(convertedEntity.id, entity.id);
       expect(convertedEntity.taskId, entity.taskId);
       expect(convertedEntity.isEnabled, entity.isEnabled);
+      expect(convertedEntity.priority, entity.priority);
       // Compare timestamps (milliseconds since epoch)
       expect(
         convertedEntity.reminderTime.millisecondsSinceEpoch,
@@ -71,6 +77,7 @@ void main() {
         taskId: 'task-101',
         reminderTime: now.add(const Duration(days: 1)).millisecondsSinceEpoch,
         isEnabled: 1,
+        priority: 'normal',
         createdAt: now.millisecondsSinceEpoch,
       );
 
@@ -81,6 +88,7 @@ void main() {
       expect(convertedModel.taskId, model.taskId);
       expect(convertedModel.reminderTime, model.reminderTime);
       expect(convertedModel.isEnabled, model.isEnabled);
+      expect(convertedModel.priority, model.priority);
       expect(convertedModel.createdAt, model.createdAt);
     });
 
@@ -90,6 +98,7 @@ void main() {
         id: '5',
         taskId: 'task-202',
         reminderTime: time,
+        priority: ReminderPriority.normal,
         createdAt: time,
       );
 
@@ -97,6 +106,7 @@ void main() {
         id: '5',
         taskId: 'task-202',
         reminderTime: time,
+        priority: ReminderPriority.normal,
         createdAt: time,
       );
 
@@ -104,6 +114,7 @@ void main() {
         id: '6',
         taskId: 'task-303',
         reminderTime: time,
+        priority: ReminderPriority.urgent,
         createdAt: time,
       );
 
@@ -117,6 +128,7 @@ void main() {
         taskId: 'task-404',
         reminderTime: DateTime.now(),
         isEnabled: false,
+        priority: ReminderPriority.normal,
         createdAt: DateTime.now(),
       );
 
