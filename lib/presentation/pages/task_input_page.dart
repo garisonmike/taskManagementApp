@@ -27,6 +27,7 @@ class _TaskInputPageState extends ConsumerState<TaskInputPage> {
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
   late TaskType _selectedTaskType;
+  late TaskPriority _selectedPriority;
   DateTime? _selectedDeadline;
   DateTime? _timeBasedStart;
   DateTime? _timeBasedEnd;
@@ -47,6 +48,7 @@ class _TaskInputPageState extends ConsumerState<TaskInputPage> {
       text: task?.description ?? '',
     );
     _selectedTaskType = task?.taskType ?? TaskType.unsure;
+    _selectedPriority = task?.priority ?? TaskPriority.normal;
     _selectedDeadline = task?.deadline;
     _timeBasedStart = task?.timeBasedStart;
     _timeBasedEnd = task?.timeBasedEnd;
@@ -91,6 +93,7 @@ class _TaskInputPageState extends ConsumerState<TaskInputPage> {
             ? null
             : _descriptionController.text.trim(),
         taskType: _selectedTaskType,
+        priority: _selectedPriority,
         deadline: _selectedTaskType == TaskType.deadline
             ? _selectedDeadline
             : null,
@@ -291,6 +294,34 @@ class _TaskInputPageState extends ConsumerState<TaskInputPage> {
               ),
               maxLines: 3,
               textInputAction: TextInputAction.done,
+            ),
+            const SizedBox(height: 24),
+
+            // Priority selector
+            const Text(
+              'Priority',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            SegmentedButton<TaskPriority>(
+              segments: const [
+                ButtonSegment(
+                  value: TaskPriority.normal,
+                  label: Text('Normal'),
+                  icon: Icon(Icons.low_priority),
+                ),
+                ButtonSegment(
+                  value: TaskPriority.urgent,
+                  label: Text('Urgent'),
+                  icon: Icon(Icons.priority_high),
+                ),
+              ],
+              selected: {_selectedPriority},
+              onSelectionChanged: (Set<TaskPriority> selected) {
+                setState(() {
+                  _selectedPriority = selected.first;
+                });
+              },
             ),
             const SizedBox(height: 24),
 

@@ -6,6 +6,7 @@ class TaskModel {
   final String title;
   final String? description;
   final String taskType; // stored as string in DB
+  final String priority; // stored as string in DB
   final int? deadline; // stored as epoch milliseconds
   final int? timeBasedStart; // stored as epoch milliseconds
   final int? timeBasedEnd; // stored as epoch milliseconds
@@ -22,6 +23,7 @@ class TaskModel {
     required this.title,
     this.description,
     required this.taskType,
+    this.priority = 'normal',
     this.deadline,
     this.timeBasedStart,
     this.timeBasedEnd,
@@ -43,6 +45,10 @@ class TaskModel {
       taskType: TaskType.values.firstWhere(
         (t) => t.name == taskType,
         orElse: () => TaskType.unsure,
+      ),
+      priority: TaskPriority.values.firstWhere(
+        (p) => p.name == priority,
+        orElse: () => TaskPriority.normal,
       ),
       deadline: deadline != null
           ? DateTime.fromMillisecondsSinceEpoch(deadline!)
@@ -72,6 +78,7 @@ class TaskModel {
       title: entity.title,
       description: entity.description,
       taskType: entity.taskType.name,
+      priority: entity.priority.name,
       deadline: entity.deadline?.millisecondsSinceEpoch,
       timeBasedStart: entity.timeBasedStart?.millisecondsSinceEpoch,
       timeBasedEnd: entity.timeBasedEnd?.millisecondsSinceEpoch,
@@ -92,6 +99,7 @@ class TaskModel {
       'title': title,
       'description': description,
       'task_type': taskType,
+      'priority': priority,
       'deadline': deadline,
       'time_based_start': timeBasedStart,
       'time_based_end': timeBasedEnd,
@@ -112,6 +120,7 @@ class TaskModel {
       title: map['title'] as String,
       description: map['description'] as String?,
       taskType: map['task_type'] as String,
+      priority: (map['priority'] as String?) ?? 'normal',
       deadline: map['deadline'] as int?,
       timeBasedStart: map['time_based_start'] as int?,
       timeBasedEnd: map['time_based_end'] as int?,

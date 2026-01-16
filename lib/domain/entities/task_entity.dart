@@ -10,12 +10,22 @@ enum TaskType {
   timeBased,
 }
 
+/// Priority levels for tasks
+enum TaskPriority {
+  /// Normal priority task
+  normal,
+
+  /// Urgent/high priority task
+  urgent,
+}
+
 /// Task entity - immutable domain model
 class TaskEntity {
   final String id;
   final String title;
   final String? description;
   final TaskType taskType;
+  final TaskPriority priority;
 
   // Time-related fields
   final DateTime? deadline; // For deadline tasks
@@ -38,6 +48,7 @@ class TaskEntity {
     required this.title,
     this.description,
     required this.taskType,
+    this.priority = TaskPriority.normal,
     this.deadline,
     this.timeBasedStart,
     this.timeBasedEnd,
@@ -56,6 +67,7 @@ class TaskEntity {
     String? title,
     String? description,
     TaskType? taskType,
+    TaskPriority? priority,
     DateTime? deadline,
     DateTime? timeBasedStart,
     DateTime? timeBasedEnd,
@@ -72,6 +84,7 @@ class TaskEntity {
       title: title ?? this.title,
       description: description ?? this.description,
       taskType: taskType ?? this.taskType,
+      priority: priority ?? this.priority,
       deadline: deadline ?? this.deadline,
       timeBasedStart: timeBasedStart ?? this.timeBasedStart,
       timeBasedEnd: timeBasedEnd ?? this.timeBasedEnd,
@@ -94,6 +107,7 @@ class TaskEntity {
         other.title == title &&
         other.description == description &&
         other.taskType == taskType &&
+        other.priority == priority &&
         other.deadline == deadline &&
         other.timeBasedStart == timeBasedStart &&
         other.timeBasedEnd == timeBasedEnd &&
@@ -113,6 +127,7 @@ class TaskEntity {
       title,
       description,
       taskType,
+      priority,
       deadline,
       timeBasedStart,
       timeBasedEnd,

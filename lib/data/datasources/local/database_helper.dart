@@ -10,7 +10,7 @@ class DatabaseHelper {
 
   // Database configuration
   static const String _databaseName = 'task_management.db';
-  static const int _databaseVersion = 8;
+  static const int _databaseVersion = 9;
 
   DatabaseHelper._internal({String? testPath}) : _testPath = testPath;
 
@@ -47,6 +47,7 @@ class DatabaseHelper {
         title TEXT NOT NULL,
         description TEXT,
         task_type TEXT NOT NULL,
+        priority TEXT NOT NULL DEFAULT 'normal',
         deadline INTEGER,
         time_based_start INTEGER,
         time_based_end INTEGER,
@@ -507,6 +508,13 @@ class DatabaseHelper {
       await db.execute('''
         ALTER TABLE blueprint_tasks ADD COLUMN weekday INTEGER
       ''');
+
+      // Version 9: Add priority column to tasks table
+      if (oldVersion < 9) {
+        await db.execute('''
+        ALTER TABLE tasks ADD COLUMN priority TEXT NOT NULL DEFAULT 'normal'
+      ''');
+      }
     }
   }
 

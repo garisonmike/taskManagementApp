@@ -835,7 +835,7 @@ Completed: ✅
 ---
 
 ## Issue 9.6 — Task Ordering & Sorting Rules
-**Status:** ⏳ Pending
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
 - Task order:
@@ -847,11 +847,40 @@ Completed: ✅
 - Urgent tasks visually distinguished
 
 **Completion Notes**
-- Add priority enum to TaskEntity
-- Centralize sorting comparator
-- Persist user sort preference
+- Added TaskPriority enum (normal, urgent) to TaskEntity with default TaskPriority.normal
+- Database migration to version 9: Added priority TEXT column to tasks table (default 'normal')
+- Created TaskSorter utility class with centralized sorting logic:
+  * Three sort methods: byType, byPriority, byCreatedDate
+  * _compareByType implements specified order: time-based → deadline (nearest first) → unsure
+  * _getStatusPriority ensures: incomplete (0) → completed (1) → failed (2)
+  * All sort methods respect status priority first, then apply secondary sort
+- Implemented sort preference management:
+  * taskSortOrderProvider (StateProvider) stores user preference
+  * sortedTasksProvider (Provider) applies sorting based on selected order
+  * Default sort order: TaskSortOrder.byType
+- UI enhancements in TasksPage:
+  * Added PopupMenuButton in AppBar with three sort options: "By Type", "By Priority", "By Date"
+  * Sort preference persists across app sessions
+- Visual distinction for urgent tasks:
+  * Red left border (4px width) on task tile
+  * Red tinted background (Colors.red.withValues(alpha: 0.05))
+  * Red priority_high icon displayed before title
+  * Bold title text for urgent incomplete tasks
+  * Red icon color for urgent task icons
+- Priority selector in TaskInputPage:
+  * SegmentedButton with Normal/Urgent options
+  * Initializes from existing task priority with default TaskPriority.normal
+  * Persisted via TaskEntity priority field
+- Updated TaskModel with priority field:
+  * toEntity() uses TaskPriority.values.firstWhere for parsing
+  * fromEntity() uses entity.priority.name
+  * toMap()/fromMap() handle priority with backward compatibility
+- All 104 tests passing
+- Zero flutter analyze issues
+- Clean architecture: Domain enum → Data model → Repository → Provider → UI
+- Sort logic isolated in dedicated utility class for maintainability
 
-**Completed:** ⬜
+**Completed:** ✅
 
 ---
 

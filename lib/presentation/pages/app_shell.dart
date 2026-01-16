@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../domain/entities/task_entity.dart';
+import '../../domain/utils/task_sorter.dart';
 import '../providers/alarm_provider.dart';
 import '../providers/blueprint_provider.dart';
 import '../providers/heatmap_provider.dart';
@@ -78,9 +79,10 @@ class TasksPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tasksAsyncValue = ref.watch(taskNotifierProvider);
+    final tasksAsyncValue = ref.watch(sortedTasksProvider);
     final heatmapVisibility = ref.watch(heatmapVisibilityProvider);
     final selectionState = ref.watch(selectionStateProvider);
+    final sortOrder = ref.watch(taskSortOrderProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -107,6 +109,81 @@ class TasksPage extends ConsumerWidget {
               },
             )
           else ...[
+            PopupMenuButton<TaskSortOrder>(
+              icon: const Icon(Icons.sort),
+              tooltip: 'Sort tasks',
+              onSelected: (order) {
+                ref.read(taskSortOrderProvider.notifier).state = order;
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: TaskSortOrder.byType,
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.category,
+                        color: sortOrder == TaskSortOrder.byType
+                            ? Theme.of(context).primaryColor
+                            : null,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'By Type',
+                        style: TextStyle(
+                          fontWeight: sortOrder == TaskSortOrder.byType
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: TaskSortOrder.byPriority,
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.priority_high,
+                        color: sortOrder == TaskSortOrder.byPriority
+                            ? Theme.of(context).primaryColor
+                            : null,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'By Priority',
+                        style: TextStyle(
+                          fontWeight: sortOrder == TaskSortOrder.byPriority
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: TaskSortOrder.byCreatedDate,
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.access_time,
+                        color: sortOrder == TaskSortOrder.byCreatedDate
+                            ? Theme.of(context).primaryColor
+                            : null,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'By Date',
+                        style: TextStyle(
+                          fontWeight: sortOrder == TaskSortOrder.byCreatedDate
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
             IconButton(
               icon: const Icon(Icons.checklist),
               tooltip: 'Select tasks',
@@ -389,72 +466,103 @@ class TaskListTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return ListTile(
-      selected: isSelected,
-      leading: isSelectionMode
-          ? Checkbox(
-              value: isSelected,
-              onChanged: (_) => onSelectionChanged?.call(),
+    final isUrgent = task.priority == TaskPriority.urgent;
+
+    return Container(
+      decoration: isUrgent && !task.isCompleted
+          ? BoxDecoration(
+              border: Border(left: BorderSide(color: Colors.red, width: 4)),
             )
-          : Icon(
-              _getTaskIcon(task.taskType),
-              color: task.isCompleted ? Colors.green : null,
+          : null,
+      child: ListTile(
+        selected: isSelected,
+        tileColor: isUrgent && !task.isCompleted
+            ? Colors.red.withValues(alpha: 0.05)
+            : null,
+        leading: isSelectionMode
+            ? Checkbox(
+                value: isSelected,
+                onChanged: (_) => onSelectionChanged?.call(),
+              )
+            : Icon(
+                _getTaskIcon(task.taskType),
+                color: task.isCompleted
+                    ? Colors.green
+                    : (isUrgent ? Colors.red : null),
+              ),
+        title: Row(
+          children: [
+            if (isUrgent && !task.isCompleted) ...[
+              const Icon(Icons.priority_high, color: Colors.red, size: 20),
+              const SizedBox(width: 4),
+            ],
+            Expanded(
+              child: Text(
+                task.title,
+                style: TextStyle(
+                  decoration: task.isCompleted
+                      ? TextDecoration.lineThrough
+                      : null,
+                  fontWeight: isUrgent && !task.isCompleted
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                ),
+              ),
             ),
-      title: Text(
-        task.title,
-        style: TextStyle(
-          decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+          ],
         ),
-      ),
-      subtitle: _buildSubtitle(),
-      trailing: isSelectionMode
-          ? null
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (task.isCompleted)
-                  const Icon(Icons.check_circle, color: Colors.green)
-                else
+        subtitle: _buildSubtitle(),
+        trailing: isSelectionMode
+            ? null
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (task.isCompleted)
+                    const Icon(Icons.check_circle, color: Colors.green)
+                  else
+                    IconButton(
+                      icon: const Icon(Icons.check_circle_outline),
+                      tooltip: 'Mark as complete',
+                      onPressed: () => _showCompleteTaskDialog(context, ref),
+                    ),
                   IconButton(
-                    icon: const Icon(Icons.check_circle_outline),
-                    tooltip: 'Mark as complete',
-                    onPressed: () => _showCompleteTaskDialog(context, ref),
+                    icon: const Icon(Icons.more_vert),
+                    tooltip: 'More actions',
+                    onPressed: () => _showTaskActionsMenu(context, ref),
                   ),
-                IconButton(
-                  icon: const Icon(Icons.more_vert),
-                  tooltip: 'More actions',
-                  onPressed: () => _showTaskActionsMenu(context, ref),
-                ),
-              ],
-            ),
-      onTap: isSelectionMode
-          ? onSelectionChanged
-          : () async {
-              final result = await Navigator.push<TaskInputResult>(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => TaskInputPage(existingTask: task),
-                ),
-              );
+                ],
+              ),
+        onTap: isSelectionMode
+            ? onSelectionChanged
+            : () async {
+                final result = await Navigator.push<TaskInputResult>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TaskInputPage(existingTask: task),
+                  ),
+                );
 
-              if (result != null && context.mounted) {
-                await ref
-                    .read(taskNotifierProvider.notifier)
-                    .updateTask(result.task);
+                if (result != null && context.mounted) {
+                  await ref
+                      .read(taskNotifierProvider.notifier)
+                      .updateTask(result.task);
 
-                // Add or update reminder if provided
-                if (result.reminder != null) {
-                  final reminderRepo = ref.read(reminderRepositoryProvider);
-                  await reminderRepo.addReminder(result.reminder!);
+                  // Add or update reminder if provided
+                  if (result.reminder != null) {
+                    final reminderRepo = ref.read(reminderRepositoryProvider);
+                    await reminderRepo.addReminder(result.reminder!);
+                  }
+
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Task updated successfully'),
+                      ),
+                    );
+                  }
                 }
-
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Task updated successfully')),
-                  );
-                }
-              }
-            },
+              },
+      ),
     );
   }
 

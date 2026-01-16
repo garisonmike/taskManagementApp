@@ -6,11 +6,17 @@ import '../../domain/entities/task_entity.dart';
 import '../../domain/entities/task_log_entity.dart';
 import '../../domain/repositories/task_log_repository.dart';
 import '../../domain/repositories/task_repository.dart';
+import '../../domain/utils/task_sorter.dart';
 import 'task_log_provider.dart';
 
 /// Provider for TaskRepository
 final taskRepositoryProvider = Provider<TaskRepository>((ref) {
   return TaskRepositoryImpl();
+});
+
+/// Provider for sort order preference
+final taskSortOrderProvider = StateProvider<TaskSortOrder>((ref) {
+  return TaskSortOrder.byType; // Default sort order
 });
 
 /// State notifier for managing tasks
@@ -194,3 +200,13 @@ final taskNotifierProvider =
       final logRepository = ref.watch(taskLogRepositoryProvider);
       return TaskNotifier(repository, logRepository: logRepository);
     });
+
+/// Provider for sorted tasks based on user's preference
+final sortedTasksProvider = Provider<AsyncValue<List<TaskEntity>>>((ref) {
+  final tasksAsyncValue = ref.watch(taskNotifierProvider);
+  final sortOrder = ref.watch(taskSortOrderProvider);
+
+  return tasksAsyncValue.whenData((tasks) {
+    return TaskSorter.sort(tasks, sortOrder);
+  });
+});
