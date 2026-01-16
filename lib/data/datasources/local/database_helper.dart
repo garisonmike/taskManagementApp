@@ -10,7 +10,7 @@ class DatabaseHelper {
 
   // Database configuration
   static const String _databaseName = 'task_management.db';
-  static const int _databaseVersion = 4;
+  static const int _databaseVersion = 5;
 
   DatabaseHelper._internal({String? testPath}) : _testPath = testPath;
 
@@ -200,6 +200,48 @@ class DatabaseHelper {
       )
     ''');
 
+    // Foods table - Excel-like food data with default nutrition columns
+    await db.execute('''
+      CREATE TABLE foods (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        description TEXT,
+        serving_size REAL,
+        calories REAL,
+        protein REAL,
+        carbs REAL,
+        fat REAL,
+        fiber REAL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    // Nutrition columns table - Custom user-added columns
+    await db.execute('''
+      CREATE TABLE nutrition_columns (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        column_type TEXT NOT NULL,
+        unit TEXT,
+        display_order INTEGER NOT NULL,
+        created_at TEXT NOT NULL
+      )
+    ''');
+
+    // Food nutrition values table - Custom column values for foods
+    await db.execute('''
+      CREATE TABLE food_nutrition_values (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        food_id INTEGER NOT NULL,
+        nutrition_column_id INTEGER NOT NULL,
+        value TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (food_id) REFERENCES foods (id) ON DELETE CASCADE,
+        FOREIGN KEY (nutrition_column_id) REFERENCES nutrition_columns (id) ON DELETE CASCADE
+      )
+    ''');
+
     // Create indexes for better query performance
     await db.execute('CREATE INDEX idx_tasks_deadline ON tasks(deadline)');
     await db.execute('CREATE INDEX idx_tasks_created_at ON tasks(created_at)');
@@ -235,6 +277,16 @@ class DatabaseHelper {
     );
     await db.execute(
       'CREATE INDEX idx_meal_substitutions_date ON meal_substitutions(date)',
+    );
+    await db.execute('CREATE INDEX idx_foods_name ON foods(name)');
+    await db.execute(
+      'CREATE INDEX idx_nutrition_columns_order ON nutrition_columns(display_order)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_food_nutrition_values_food_id ON food_nutrition_values(food_id)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_food_nutrition_values_column_id ON food_nutrition_values(nutrition_column_id)',
     );
   }
 
@@ -349,6 +401,59 @@ class DatabaseHelper {
       );
       await db.execute(
         'CREATE INDEX idx_meal_substitutions_date ON meal_substitutions(date)',
+      );
+    }
+
+    // Version 5: Add foods table
+    if (oldVersion < 5) {
+      await db.execute('''
+        CREATE TABLE foods (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          description TEXT,
+          serving_size REAL,
+          calories REAL,
+          protein REAL,
+          carbs REAL,
+          fat REAL,
+          fiber REAL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE nutrition_columns (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          column_type TEXT NOT NULL,
+          unit TEXT,
+          display_order INTEGER NOT NULL,
+          created_at TEXT NOT NULL
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE food_nutrition_values (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          food_id INTEGER NOT NULL,
+          nutrition_column_id INTEGER NOT NULL,
+          value TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (food_id) REFERENCES foods (id) ON DELETE CASCADE,
+          FOREIGN KEY (nutrition_column_id) REFERENCES nutrition_columns (id) ON DELETE CASCADE
+        )
+      ''');
+
+      await db.execute('CREATE INDEX idx_foods_name ON foods(name)');
+      await db.execute(
+        'CREATE INDEX idx_nutrition_columns_order ON nutrition_columns(display_order)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_food_nutrition_values_food_id ON food_nutrition_values(food_id)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_food_nutrition_values_column_id ON food_nutrition_values(nutrition_column_id)',
       );
     }
   }

@@ -68,7 +68,7 @@ void main() {
       // Query version from PRAGMA
       final result = await db.rawQuery('PRAGMA user_version');
       final version = result.first['user_version'] as int;
-      expect(version, 4);
+      expect(version, 5);
     });
 
     test('All required tables are created', () async {
@@ -93,6 +93,9 @@ void main() {
       expect(tableNames.contains('meal_blueprints'), true);
       expect(tableNames.contains('blueprint_meals'), true);
       expect(tableNames.contains('meal_substitutions'), true);
+      expect(tableNames.contains('foods'), true);
+      expect(tableNames.contains('nutrition_columns'), true);
+      expect(tableNames.contains('food_nutrition_values'), true);
     });
 
     test('Indexes are created for performance', () async {
@@ -117,6 +120,10 @@ void main() {
       expect(indexNames.contains('idx_blueprint_meals_day'), true);
       expect(indexNames.contains('idx_meal_substitutions_blueprint_id'), true);
       expect(indexNames.contains('idx_meal_substitutions_date'), true);
+      expect(indexNames.contains('idx_foods_name'), true);
+      expect(indexNames.contains('idx_nutrition_columns_order'), true);
+      expect(indexNames.contains('idx_food_nutrition_values_food_id'), true);
+      expect(indexNames.contains('idx_food_nutrition_values_column_id'), true);
     });
   });
 }
