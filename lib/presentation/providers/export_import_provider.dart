@@ -5,6 +5,7 @@ import '../../core/services/csv_import_service.dart';
 import '../../data/repositories/export_import_repository.dart';
 import 'app_settings_provider.dart';
 import 'blueprint_provider.dart';
+import 'reminder_provider.dart';
 import 'task_log_provider.dart';
 import 'task_provider.dart';
 
@@ -24,6 +25,7 @@ final exportImportRepositoryProvider = Provider<ExportImportRepository>((ref) {
     ref.watch(blueprintRepositoryProvider),
     ref.watch(taskLogRepositoryProvider),
     ref.watch(appSettingsRepositoryProvider),
+    ref.watch(reminderRepositoryProvider),
     ref.watch(csvExportServiceProvider),
     ref.watch(csvImportServiceProvider),
   );

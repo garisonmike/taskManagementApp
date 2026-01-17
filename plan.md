@@ -763,7 +763,7 @@ Completed: ✅
 ---
 
 ## Issue 9.10 — Export & Import Fix
-**Status:** ⏳ Pending
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
 - Export buttons work correctly
@@ -771,11 +771,14 @@ Completed: ✅
 - User receives feedback on success/failure
 
 **Completion Notes**
-- Wire UI buttons to export/import services
-- Add validation and error handling
-- Show SnackBar / dialog feedback
+- Implemented `ExportImportRepository.exportAllToJson` and `importAllFromJson` to handle Tasks, Blueprints, Logs, Settings, and Reminders.
+- Updated `SettingsPage` to use these methods.
+- Export copies JSON to Clipboard (due to file system restrictions).
+- Import accepts JSON paste via Dialog.
+- Added success/error feedback via SnackBars.
+- Fixed `inactivityReminder` handling in import (via settings).
 
-**Completed:** ⬜
+**Completed:** ✅
 
 ---
 

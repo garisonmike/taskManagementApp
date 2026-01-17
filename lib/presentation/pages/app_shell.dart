@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
@@ -6,8 +7,10 @@ import '../../domain/entities/task_entity.dart';
 import '../../domain/utils/task_sorter.dart';
 import '../providers/alarm_provider.dart';
 import '../providers/blueprint_provider.dart';
+import '../providers/export_import_provider.dart';
 import '../providers/heatmap_provider.dart';
 import '../providers/inactivity_reminder_provider.dart';
+import '../providers/meal_blueprint_provider.dart';
 import '../providers/reminder_provider.dart';
 import '../providers/selection_state_provider.dart';
 import '../providers/task_provider.dart';
@@ -1418,8 +1421,51 @@ class SettingsPage extends ConsumerWidget {
             leading: const Icon(Icons.download_outlined),
             title: const Text('Export Data'),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              // TODO: Implement export
+            onTap: () async {
+              try {
+                final jsonString = await ref
+                    .read(exportImportRepositoryProvider)
+                    .exportAllToJson();
+
+                if (context.mounted) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Export Data'),
+                      content: SingleChildScrollView(
+                        child: SelectableText(jsonString),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Clipboard.setData(ClipboardData(text: jsonString));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Copied to clipboard'),
+                              ),
+                            );
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('Copy to Clipboard'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('Close'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Export failed: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
             },
           ),
           ListTile(
@@ -1427,7 +1473,85 @@ class SettingsPage extends ConsumerWidget {
             title: const Text('Import Data'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
-              // TODO: Implement import
+              final controller = TextEditingController();
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Import Data'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'Paste your JSON backup data here. This will merge/overwrite existing data.',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: controller,
+                        maxLines: 5,
+                        decoration: const InputDecoration(
+                          hintText: 'Paste JSON here...',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        final jsonString = controller.text;
+                        if (jsonString.isEmpty) return;
+
+                        Navigator.of(context).pop(); // Close dialog
+
+                        try {
+                          await ref
+                              .read(exportImportRepositoryProvider)
+                              .importAllFromJson(jsonString);
+
+                          // Detailed refresh of all providers
+                          ref.invalidate(taskRepositoryProvider);
+                          // Force refresh of notifier by calling load
+                          ref.read(taskNotifierProvider.notifier).loadTasks();
+                          ref.invalidate(remindersByDateProvider);
+                          ref.invalidate(activeMealBlueprintsProvider);
+                          // Theme might need explicit reload if not reactive to repo changes immediately
+                          // But typically themeNotifier watches repo or loads on init.
+                          // Let's force load by invalidating.
+                          ref.invalidate(themeNotifierProvider);
+
+                          // Inactivity reminder invalidation
+                          ref.invalidate(inactivityReminderEnabledProvider);
+                          ref.invalidate(inactivityReminderTimeProvider);
+
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Import successful'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Import failed: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      child: const Text('Import'),
+                    ),
+                  ],
+                ),
+              );
             },
           ),
           const Divider(),
