@@ -1,12 +1,10 @@
-import 'dart:math';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'splash_state.dart';
 
 /// Manages splash screen state and initialization
 class SplashNotifier extends StateNotifier<SplashState> {
-  static const List<String> _splashImages = [
+  static const List<String> splashImages = [
     'assets/splash/1percent.png',
     'assets/splash/Discipline.png',
     'assets/splash/RiskRich.png',
@@ -21,24 +19,14 @@ class SplashNotifier extends StateNotifier<SplashState> {
 
   static const Duration _minDisplayTime = Duration(milliseconds: 1500);
 
-  SplashNotifier()
+  SplashNotifier(String initialImage)
     : super(
         SplashState(
           isInitialized: false,
           hasMinTimeElapsed: false,
-          selectedImage: _selectRandomImage(),
+          selectedImage: initialImage,
         ),
       );
-
-  /// Randomly selects one splash image with statistically fair distribution
-  /// Uses microsecond-based seed to ensure true randomness across launches
-  static String _selectRandomImage() {
-    // DateTime.now().microsecondsSinceEpoch provides unique seed per launch
-    // This prevents fixed index or seed reuse, ensuring statistical fairness
-    final random = Random(DateTime.now().microsecondsSinceEpoch);
-    final index = random.nextInt(_splashImages.length);
-    return _splashImages[index];
-  }
 
   /// Initialize the app and enforce minimum display time
   Future<void> initialize() async {

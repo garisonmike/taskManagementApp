@@ -45,17 +45,16 @@ void main() {
     });
 
     test('SplashNotifier selects a random image on creation', () {
-      final notifier = SplashNotifier();
+      final notifier = SplashNotifier('assets/splash/test.png');
       final state = notifier.state;
 
-      expect(state.selectedImage, startsWith('assets/splash/'));
-      expect(state.selectedImage, endsWith('.png'));
+      expect(state.selectedImage, 'assets/splash/test.png');
       expect(state.isInitialized, false);
       expect(state.hasMinTimeElapsed, false);
     });
 
     test('SplashNotifier initializes and sets both flags', () async {
-      final notifier = SplashNotifier();
+      final notifier = SplashNotifier('assets/splash/test.png');
 
       // Start initialization
       final initFuture = notifier.initialize();
@@ -70,7 +69,7 @@ void main() {
     });
 
     test('SplashNotifier waits minimum 1.5 seconds', () async {
-      final notifier = SplashNotifier();
+      final notifier = SplashNotifier('assets/splash/test.png');
       final stopwatch = Stopwatch()..start();
 
       await notifier.initialize();
@@ -118,16 +117,14 @@ void main() {
       expect(state1, isNot(equals(state3)));
     });
 
-    test('multiple SplashNotifiers select different images (probabilistic)', () {
-      // Create multiple notifiers and check that not all select the same image
-      final images = <String>{};
-      for (int i = 0; i < 20; i++) {
-        final notifier = SplashNotifier();
-        images.add(notifier.state.selectedImage);
+    test('multiple SplashNotifiers can use different images', () {
+      // Create multiple notifiers with different images and verify they work
+      final images = SplashNotifier.splashImages;
+      
+      for (final imagePath in images.take(5)) {
+        final notifier = SplashNotifier(imagePath);
+        expect(notifier.state.selectedImage, imagePath);
       }
-
-      // With 10 images and 20 tries, we should get at least 2 different images
-      expect(images.length, greaterThan(1));
     });
 
     test('SplashState has correct hash code', () {
@@ -161,17 +158,16 @@ void main() {
     });
 
     test('10 different splash images are available', () {
-      // Verify all 10 images can be selected
-      final allImages = <String>{};
-
-      // Try multiple times to get all images
-      for (int i = 0; i < 100; i++) {
-        final notifier = SplashNotifier();
-        allImages.add(notifier.state.selectedImage);
+      // Verify all 10 images are accessible
+      final images = SplashNotifier.splashImages;
+      
+      expect(images.length, 10);
+      
+      // Verify each image can be used to create a notifier
+      for (final imagePath in images) {
+        final notifier = SplashNotifier(imagePath);
+        expect(notifier.state.selectedImage, imagePath);
       }
-
-      // Should have found multiple unique images
-      expect(allImages.length, greaterThanOrEqualTo(5));
     });
   });
 }

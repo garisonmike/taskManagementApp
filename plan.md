@@ -707,7 +707,7 @@ Completed: ✅
 ---
 
 ## Issue 9.13 — Splash Screen Improvements
-**Status:** ⏳ Pending
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
 - Splash screen displays a random image from the splash folder
@@ -721,7 +721,7 @@ Completed: ✅
 - Add safe fallback asset
 - Keep async initialization non-blocking
 
-**Completed:** ⬜
+**Completed:** 2026-01-17
 
 ---
 
