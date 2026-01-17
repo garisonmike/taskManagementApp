@@ -26,6 +26,9 @@ import 'wellness_page.dart';
 /// Provider for managing the current navigation index
 final navigationIndexProvider = StateProvider<int>((ref) => 0);
 
+/// Provider for search mode state
+final isSearchingProvider = StateProvider<bool>((ref) => false);
+
 /// Main app shell with bottom navigation
 class AppShell extends ConsumerWidget {
   const AppShell({super.key});
@@ -84,31 +87,96 @@ class AppShell extends ConsumerWidget {
 }
 
 /// Tasks page - Main task list
-class TasksPage extends ConsumerWidget {
+class TasksPage extends ConsumerStatefulWidget {
   const TasksPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TasksPage> createState() => _TasksPageState();
+}
+
+class _TasksPageState extends ConsumerState<TasksPage> {
+  late TextEditingController _searchController;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Sync controller with provider (e.g. when cleared externally)
+    ref.listen(taskSearchQueryProvider, (previous, next) {
+      if (_searchController.text != next) {
+        _searchController.text = next;
+        _searchController.selection = TextSelection.fromPosition(
+          TextPosition(offset: next.length),
+        );
+      }
+    });
+
     final tasksAsyncValue = ref.watch(sortedTasksProvider);
     final heatmapVisibility = ref.watch(heatmapVisibilityProvider);
     final selectionState = ref.watch(selectionStateProvider);
     final sortOrder = ref.watch(taskSortOrderProvider);
+    final isSearching = ref.watch(isSearchingProvider);
+    final searchQuery = ref.watch(taskSearchQueryProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: selectionState.isSelectionMode
-            ? Text('${selectionState.selectedCount} selected')
-            : const Text('Tasks'),
-        leading: selectionState.isSelectionMode
-            ? IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () {
-                  ref.read(selectionStateProvider.notifier).exitSelectionMode();
+        title: isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'Search tasks...',
+                  border: InputBorder.none,
+                  hintStyle: TextStyle(color: Colors.white70),
+                ),
+                style: const TextStyle(color: Colors.white),
+                onChanged: (value) {
+                  ref.read(taskSearchQueryProvider.notifier).state = value;
                 },
               )
-            : null,
+            : (selectionState.isSelectionMode
+                  ? Text('${selectionState.selectedCount} selected')
+                  : const Text('Tasks')),
+        leading: isSearching
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  ref.read(isSearchingProvider.notifier).state = false;
+                  ref.read(taskSearchQueryProvider.notifier).state = '';
+                },
+              )
+            : (selectionState.isSelectionMode
+                  ? IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () {
+                        ref
+                            .read(selectionStateProvider.notifier)
+                            .exitSelectionMode();
+                      },
+                    )
+                  : null),
         actions: [
-          if (selectionState.isSelectionMode)
+          if (isSearching)
+            if (searchQuery.isNotEmpty)
+              IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: () {
+                  ref.read(taskSearchQueryProvider.notifier).state = '';
+                },
+              )
+            else
+              const SizedBox.shrink()
+          else if (selectionState.isSelectionMode)
             IconButton(
               icon: const Icon(Icons.select_all),
               onPressed: () {
@@ -204,7 +272,7 @@ class TasksPage extends ConsumerWidget {
             IconButton(
               icon: const Icon(Icons.search),
               onPressed: () {
-                // TODO: Implement search
+                ref.read(isSearchingProvider.notifier).state = true;
               },
             ),
           ],

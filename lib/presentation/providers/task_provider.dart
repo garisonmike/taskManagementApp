@@ -19,6 +19,9 @@ final taskSortOrderProvider = StateProvider<TaskSortOrder>((ref) {
   return TaskSortOrder.byType; // Default sort order
 });
 
+/// Provider for task search query
+final taskSearchQueryProvider = StateProvider<String>((ref) => '');
+
 /// State notifier for managing tasks
 class TaskNotifier extends StateNotifier<AsyncValue<List<TaskEntity>>> {
   final TaskRepository _repository;
@@ -205,8 +208,21 @@ final taskNotifierProvider =
 final sortedTasksProvider = Provider<AsyncValue<List<TaskEntity>>>((ref) {
   final tasksAsyncValue = ref.watch(taskNotifierProvider);
   final sortOrder = ref.watch(taskSortOrderProvider);
+  final searchQuery = ref.watch(taskSearchQueryProvider).toLowerCase();
 
   return tasksAsyncValue.whenData((tasks) {
-    return TaskSorter.sort(tasks, sortOrder);
+    var filteredTasks = tasks;
+
+    // Filter by search query
+    if (searchQuery.isNotEmpty) {
+      filteredTasks = tasks.where((task) {
+        final titleMatch = task.title.toLowerCase().contains(searchQuery);
+        final descMatch =
+            task.description?.toLowerCase().contains(searchQuery) ?? false;
+        return titleMatch || descMatch;
+      }).toList();
+    }
+
+    return TaskSorter.sort(filteredTasks, sortOrder);
   });
 });

@@ -726,7 +726,7 @@ Completed: ✅
 ---
 
 ## Issue 9.12 — Search & Sort Fixes
-**Status:** ⏳ Pending
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
 - Task search works correctly
@@ -738,6 +738,8 @@ Completed: ✅
 - Fix search provider logic
 - Ensure search + sort compose correctly
 - Add regression tests for filtered sorting
+
+**Completed:** 2026-01-17
 
 **Completed:** ⬜
 
