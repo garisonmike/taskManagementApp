@@ -215,8 +215,6 @@ class TasksPage extends ConsumerWidget {
           if (tasks.isEmpty) {
             return Column(
               children: [
-                // Show heatmap even when no tasks
-                if (heatmapVisibility.value == true) const CompletionHeatmap(),
                 Expanded(
                   child: Center(
                     child: Column(
@@ -237,14 +235,43 @@ class TasksPage extends ConsumerWidget {
                     ),
                   ),
                 ),
+                // Show heatmap even when no tasks
+                if (heatmapVisibility.value == true)
+                  GestureDetector(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Heatmap Settings'),
+                          content: const Text(
+                            'Do you want to hide the completion heatmap? You can re-enable it anytime in Settings.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                ref
+                                    .read(heatmapVisibilityProvider.notifier)
+                                    .setVisibility(false);
+                                Navigator.pop(context);
+                              },
+                              child: const Text('Hide'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    child: const CompletionHeatmap(),
+                  ),
               ],
             );
           }
 
           return Column(
             children: [
-              // Show heatmap at the top
-              if (heatmapVisibility.value == true) const CompletionHeatmap(),
               Expanded(
                 child: ListView.builder(
                   itemCount: tasks.length,
@@ -263,6 +290,37 @@ class TasksPage extends ConsumerWidget {
                   },
                 ),
               ),
+              // Show heatmap at the bottom
+              if (heatmapVisibility.value == true)
+                GestureDetector(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Heatmap Settings'),
+                        content: const Text(
+                          'Do you want to hide the completion heatmap? You can re-enable it anytime in Settings.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              ref
+                                  .read(heatmapVisibilityProvider.notifier)
+                                  .setVisibility(false);
+                              Navigator.pop(context);
+                            },
+                            child: const Text('Hide'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  child: const CompletionHeatmap(),
+                ),
               // Bulk action bar
               if (selectionState.isSelectionMode &&
                   selectionState.selectedCount > 0)

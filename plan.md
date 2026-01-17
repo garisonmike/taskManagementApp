@@ -744,7 +744,7 @@ Completed: ✅
 ---
 
 ## Issue 9.11 — Heatmap UX Adjustment
-**Status:** ⏳ Pending
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
 - Heatmap appears **below** the task list
@@ -757,6 +757,8 @@ Completed: ✅
 - Move heatmap widget placement
 - Add interaction dialog
 - Respect `heatmapVisible` setting
+
+**Completed:** 2026-01-17
 
 **Completed:** ⬜
 
