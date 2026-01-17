@@ -65,6 +65,19 @@ void main() {
       }
     });
 
+    test('Custom theme persists with color', () async {
+      // Save custom theme and color
+      await repository.saveThemeMode(AppThemeMode.custom);
+      await repository.saveCustomColor(Colors.purple.value);
+
+      // Load it back
+      final loadedMode = await repository.loadThemeMode();
+      final loadedColor = await repository.loadCustomColor();
+
+      expect(loadedMode, AppThemeMode.custom);
+      expect(loadedColor, Colors.purple.value);
+    });
+
     test('Theme names are correct', () {
       expect(
         AppTheme.getThemeName(AppThemeMode.timberBrownLight),
@@ -74,7 +87,8 @@ void main() {
         AppTheme.getThemeName(AppThemeMode.timberBrownDark),
         'Timber Brown (Dark)',
       );
-      expect(AppTheme.getThemeName(AppThemeMode.light), 'Light');
+      expect(AppTheme.getThemeName(AppThemeMode.light), 'Standard Light');
+      expect(AppTheme.getThemeName(AppThemeMode.custom), 'Custom Theme');
     });
 
     test('Theme data is returned correctly', () {
@@ -86,6 +100,30 @@ void main() {
 
       final standardLightTheme = AppTheme.getTheme(AppThemeMode.light);
       expect(standardLightTheme.brightness, Brightness.light);
+
+      final customTheme = AppTheme.getTheme(
+        AppThemeMode.custom,
+        customColor: Colors.purple,
+      );
+
+      // Verify that using a different color produces a different theme
+      final redTheme = AppTheme.getTheme(
+        AppThemeMode.custom,
+        customColor: Colors.red,
+      );
+
+      expect(
+        customTheme.colorScheme.primary,
+        isNot(redTheme.colorScheme.primary),
+        reason: 'Custom themes with different seed colors should differ',
+      );
+
+      // Verify it's not the default
+      final defaultTheme = AppTheme.getTheme(AppThemeMode.timberBrownLight);
+      expect(
+        customTheme.colorScheme.primary,
+        isNot(defaultTheme.colorScheme.primary),
+      );
     });
   });
 }

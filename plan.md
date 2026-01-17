@@ -780,7 +780,7 @@ Completed: ✅
 ---
 
 ## Issue 9.9 — Theme Customization UI
-**Status:** ⏳ Pending
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
 - User can create a custom theme
@@ -789,12 +789,13 @@ Completed: ✅
 - Light / Dark / Custom coexist
 
 **Completion Notes**
-- Create CustomThemeEntity
-- Theme editor UI
-- Persist selected theme in settings
-- Live preview support
+- Implemented `ThemeCustomizationPage` with color picker and live preview.
+- Updated `AppTheme` to support dynamic `customTheme` creation from seed color.
+- Updated `ThemeRepository` and `ThemeNotifier` to persist custom color choice.
+- Added "Custom Theme" option to `ThemeSelectionPage` with edit capability.
+- Verified persistence and theme generation with unit tests.
 
-**Completed:** ⬜
+**Completed:** ✅
 
 ---
 
