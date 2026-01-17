@@ -18,6 +18,7 @@ import 'reminders_page.dart';
 import 'task_input_page.dart';
 import 'task_logs_page.dart';
 import 'theme_selection_page.dart';
+import 'wellness_page.dart';
 
 /// Provider for managing the current navigation index
 final navigationIndexProvider = StateProvider<int>((ref) => 0);
@@ -36,6 +37,7 @@ class AppShell extends ConsumerWidget {
         children: const [
           TasksPage(),
           RemindersPage(),
+          WellnessPage(),
           BlueprintsPage(),
           SettingsPage(),
         ],
@@ -56,6 +58,11 @@ class AppShell extends ConsumerWidget {
             icon: Icon(Icons.notifications_outlined),
             activeIcon: Icon(Icons.notifications),
             label: 'Reminders',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.restaurant_menu),
+            activeIcon: Icon(Icons.restaurant),
+            label: 'Wellness',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.repeat_outlined),

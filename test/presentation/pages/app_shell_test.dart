@@ -7,6 +7,7 @@ import 'package:task_management_app/domain/repositories/task_repository.dart';
 import 'package:task_management_app/presentation/pages/app_shell.dart';
 import 'package:task_management_app/presentation/providers/blueprint_provider.dart';
 import 'package:task_management_app/presentation/providers/heatmap_provider.dart';
+import 'package:task_management_app/presentation/providers/meal_blueprint_provider.dart';
 import 'package:task_management_app/presentation/providers/reminder_provider.dart';
 import 'package:task_management_app/presentation/providers/task_provider.dart';
 
@@ -26,6 +27,8 @@ void main() {
             heatmapVisibilityProvider.overrideWith(
               (ref) => HeatmapVisibilityNotifierTest(),
             ),
+            // Override meal provider to avoid database access
+            activeMealBlueprintsProvider.overrideWith((ref) => []),
           ],
           child: const MaterialApp(home: AppShell()),
         ),
@@ -37,11 +40,11 @@ void main() {
       // Verify bottom navigation bar exists
       expect(find.byType(BottomNavigationBar), findsOneWidget);
 
-      // Verify bottom nav has 4 items
+      // Verify bottom nav has 5 items
       final navBar = tester.widget<BottomNavigationBar>(
         find.byType(BottomNavigationBar),
       );
-      expect(navBar.items.length, 4);
+      expect(navBar.items.length, 5);
     });
 
     testWidgets('Default page is Tasks page', (WidgetTester tester) async {

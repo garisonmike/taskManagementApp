@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Available theme modes for the app
-enum AppThemeMode { timberBrownLight, timberBrownDark, light }
+enum AppThemeMode { timberBrownLight, timberBrownDark, light, custom }
 
 /// Theme configuration for the Task Management App
 class AppTheme {
@@ -10,6 +10,20 @@ class AppTheme {
   static const Color timberBrownLight = Color(0xFF9C7A6A);
   static const Color timberBrownDark = Color(0xFF4B3529);
   static const Color timberBrownAccent = Color(0xFFA07D6C);
+
+  /// Helper to get friendly name for theme mode
+  static String getThemeName(AppThemeMode mode) {
+    switch (mode) {
+      case AppThemeMode.timberBrownLight:
+        return 'Timber Brown (Light)';
+      case AppThemeMode.timberBrownDark:
+        return 'Timber Brown (Dark)';
+      case AppThemeMode.light:
+        return 'Standard Light';
+      case AppThemeMode.custom:
+        return 'Custom Theme';
+    }
+  }
 
   /// Timber Brown Light Theme (Default)
   static ThemeData get timberBrownLightTheme {
@@ -78,8 +92,34 @@ class AppTheme {
     );
   }
 
+  /// Custom Theme
+  static ThemeData customTheme(Color seedColor) {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: seedColor,
+        brightness: Brightness.light,
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: seedColor,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: seedColor,
+        foregroundColor: Colors.white,
+      ),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        selectedItemColor: seedColor,
+        unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
+      ),
+    );
+  }
+
   /// Get theme data by mode
-  static ThemeData getTheme(AppThemeMode mode) {
+  static ThemeData getTheme(AppThemeMode mode, {Color? customColor}) {
     switch (mode) {
       case AppThemeMode.timberBrownLight:
         return timberBrownLightTheme;
@@ -87,18 +127,8 @@ class AppTheme {
         return timberBrownDarkTheme;
       case AppThemeMode.light:
         return lightTheme;
-    }
-  }
-
-  /// Get theme name for display
-  static String getThemeName(AppThemeMode mode) {
-    switch (mode) {
-      case AppThemeMode.timberBrownLight:
-        return 'Timber Brown (Light)';
-      case AppThemeMode.timberBrownDark:
-        return 'Timber Brown (Dark)';
-      case AppThemeMode.light:
-        return 'Light';
+      case AppThemeMode.custom:
+        return customTheme(customColor ?? Colors.blue);
     }
   }
 }

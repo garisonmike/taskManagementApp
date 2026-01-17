@@ -799,7 +799,7 @@ Completed: ✅
 ---
 
 ## Issue 9.8 — Meals & Workouts UI Exposure
-**Status:** ⏳ Pending
+**Status:** ✅ Completed
 
 **Acceptance Criteria**
 - Meals section visible in main navigation
@@ -808,11 +808,12 @@ Completed: ✅
 - Workout section visible (or placeholder)
 
 **Completion Notes**
-- Wire existing meals logic to UI
-- Add navigation entry
-- Ensure logs integrate with analytics
+- Implemented `WellnessPage` with properly structured `MealsView` and `WorkoutsView`.
+- Integrated `WellnessPage` into `AppShell` as a new navigation tab.
+- Connected `MealsView` to `MealBlueprintService` to display weekly timeline and ingredients.
+- Verified functionality with updated `AppShell` tests.
 
-**Completed:** ⬜
+**Completed:** ✅
 
 ---
 

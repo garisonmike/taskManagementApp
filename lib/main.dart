@@ -20,11 +20,14 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(currentThemeProvider);
+    final themeState = ref.watch(themeNotifierProvider);
 
     return MaterialApp(
       title: 'Task Management App',
-      theme: AppTheme.getTheme(themeMode),
+      theme: AppTheme.getTheme(
+        themeState.currentTheme,
+        customColor: themeState.customColor,
+      ),
       home: const SplashScreen(),
     );
   }

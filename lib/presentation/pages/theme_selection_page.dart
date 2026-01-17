@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../providers/theme_provider.dart';
+import 'theme_customization_page.dart';
 
 /// Theme selection page
 class ThemeSelectionPage extends ConsumerWidget {
@@ -40,6 +41,12 @@ class ThemeSelectionPage extends ConsumerWidget {
             currentTheme: currentTheme,
             icon: Icons.light_mode_outlined,
           ),
+          const Divider(height: 1),
+          _buildCustomThemeTile(
+            context: context,
+            ref: ref,
+            currentTheme: currentTheme,
+          ),
         ],
       ),
     );
@@ -67,6 +74,62 @@ class ThemeSelectionPage extends ConsumerWidget {
         await ref.read(themeNotifierProvider.notifier).changeTheme(themeMode);
         if (context.mounted) {
           Navigator.of(context).pop();
+        }
+      },
+    );
+  }
+
+  Widget _buildCustomThemeTile({
+    required BuildContext context,
+    required WidgetRef ref,
+    required AppThemeMode currentTheme,
+  }) {
+    final isSelected = currentTheme == AppThemeMode.custom;
+
+    return ListTile(
+      leading: const Icon(Icons.palette_outlined),
+      title: const Text('Custom Theme'),
+      subtitle: isSelected ? const Text('Tap edit to change color') : null,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isSelected)
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const ThemeCustomizationPage(),
+                  ),
+                );
+              },
+            ),
+          if (isSelected)
+            Icon(
+              Icons.check_circle,
+              color: Theme.of(context).colorScheme.primary,
+            )
+          else
+            const Icon(Icons.arrow_forward_ios, size: 16),
+        ],
+      ),
+      onTap: () {
+        if (isSelected) {
+          // If already selected, maybe do nothing or open customize?
+          // Let's open customize
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const ThemeCustomizationPage(),
+            ),
+          );
+        } else {
+          // If not selected, open customize to pick a color first (or restore last if available?)
+          // For now, always open customize to be safe
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const ThemeCustomizationPage(),
+            ),
+          );
         }
       },
     );
