@@ -120,7 +120,7 @@ void main() {
     test('multiple SplashNotifiers can use different images', () {
       // Create multiple notifiers with different images and verify they work
       final images = SplashNotifier.splashImages;
-      
+
       for (final imagePath in images.take(5)) {
         final notifier = SplashNotifier(imagePath);
         expect(notifier.state.selectedImage, imagePath);
@@ -160,9 +160,9 @@ void main() {
     test('10 different splash images are available', () {
       // Verify all 10 images are accessible
       final images = SplashNotifier.splashImages;
-      
+
       expect(images.length, 10);
-      
+
       // Verify each image can be used to create a notifier
       for (final imagePath in images) {
         final notifier = SplashNotifier(imagePath);
