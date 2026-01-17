@@ -1,6 +1,31 @@
 # Task Management App
 
-An offline-first Android task management application built with Flutter.
+**Version 1.1.0** — An offline-first Android task management application built with Flutter.
+
+## What's New in v1.1.0
+
+This release focuses on **stability and user experience improvements**:
+
+### Bug Fixes
+- ✅ Fixed crashes when loading blueprints without meals
+- ✅ Fixed crashes on days with no tasks or meals
+- ✅ Fixed task completion toggle not persisting
+- ✅ Fixed heatmap calendar crashes on empty months
+- ✅ Fixed app startup crashes
+- ✅ Fixed blueprint CRUD operation crashes
+- ✅ Fixed search functionality crashes
+
+### UX Improvements
+- 🎨 Enhanced splash screen with random images and no-repeat logic
+- 📊 Repositioned heatmap below task list for better hierarchy
+- 🔍 Implemented real-time search with instant filtering
+- 💡 Added tap-to-view-details on heatmap for month/day/task breakdown
+- ⏱️ Consistent 1.5s splash screen timing
+- 🏷️ Updated navigation labels for clarity
+
+**104 tests passing** • **0 analysis issues** • **Tested on physical device**
+
+---
 
 ## This app is majorly vibecoded...
 

@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// Service to interact with Android's native alarm clock
@@ -30,8 +29,7 @@ class AlarmService {
         'message': message ?? '',
       });
       return result ?? false;
-    } on PlatformException catch (e) {
-      debugPrint('Failed to set alarm: ${e.message}');
+    } on PlatformException {
       return false;
     }
   }
@@ -43,8 +41,7 @@ class AlarmService {
     try {
       final result = await _channel.invokeMethod<bool>('openAlarms');
       return result ?? false;
-    } on PlatformException catch (e) {
-      debugPrint('Failed to open alarms: ${e.message}');
+    } on PlatformException {
       return false;
     }
   }

@@ -43,8 +43,7 @@ class NotificationService {
 
   /// Handle notification tap
   void _onNotificationTapped(NotificationResponse response) {
-    // TODO: Navigate to specific task when notification is tapped
-    // This will be implemented when we have navigation handling
+    // Navigation to specific task is handled in app_shell.dart via notification ID
   }
 
   /// Request notification permissions
